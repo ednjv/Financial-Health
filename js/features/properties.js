@@ -84,13 +84,14 @@ var Properties = {
       document.getElementById('rn-dividend').value = r.dividend || '';
       document.getElementById('rn-commission').value = r.commission || '';
       document.getElementById('rn-extra').value = r.extraCommission || '';
+      document.getElementById('rn-income').value = r.additionalIncome || '';
       document.getElementById('rn-net').value = r.net || '';
       document.getElementById('rn-notes').value = r.notes || '';
     } else {
       this._editingRentId = null;
       if (title) title.textContent = 'Registrar Arriendo';
       document.getElementById('rn-month').value = new Date().toISOString().slice(0, 7);
-      ['rn-amount','rn-dividend','rn-commission','rn-net','rn-notes'].forEach(function(eid) { document.getElementById(eid).value = ''; });
+      ['rn-amount','rn-income','rn-dividend','rn-commission','rn-net','rn-notes'].forEach(function(eid) { document.getElementById(eid).value = ''; });
       var defProp = this.getAll().filter(function(x) { return x.id === sel.value; })[0];
       document.getElementById('rn-extra').value = defProp && defProp.defaultExtraCommission ? defProp.defaultExtraCommission : '';
     }
@@ -113,10 +114,11 @@ var Properties = {
 
   calcNet: function() {
     var a = parseFloat(document.getElementById('rn-amount').value) || 0;
+    var i = parseFloat(document.getElementById('rn-income').value) || 0;
     var d = parseFloat(document.getElementById('rn-dividend').value) || 0;
     var c = parseFloat(document.getElementById('rn-commission').value) || 0;
     var e = parseFloat(document.getElementById('rn-extra').value) || 0;
-    document.getElementById('rn-net').value = a - d - c - e;
+    document.getElementById('rn-net').value = a + i - d - c - e;
   },
 
   saveRent: function() {
@@ -129,6 +131,7 @@ var Properties = {
       dividend: parseFloat(document.getElementById('rn-dividend').value) || 0,
       commission: parseFloat(document.getElementById('rn-commission').value) || 0,
       extraCommission: parseFloat(document.getElementById('rn-extra').value) || 0,
+      additionalIncome: parseFloat(document.getElementById('rn-income').value) || 0,
       net: parseFloat(document.getElementById('rn-net').value) || 0,
       notes: document.getElementById('rn-notes').value
     };
@@ -188,9 +191,11 @@ var Properties = {
       var rem = (p.totalInstallments || 0) - (p.paidInstallments || 0);
       totalDebtUF += p.ufFee && rem ? p.ufFee * rem : 0;
     });
-    var now = new Date().toISOString().slice(0, 7);
-    var netMonth = rents.filter(function(r) { return r.month === now; }).reduce(function(s, r) { return s + (r.net || 0); }, 0);
-    var netYear  = rents.filter(function(r) { return r.month >= new Date().getFullYear() + '-01'; }).reduce(function(s, r) { return s + (r.net || 0); }, 0);
+    var yearPrefix = new Date().getFullYear() + '-01';
+    var yearRents  = rents.filter(function(r) { return r.month >= yearPrefix; });
+    var netYear    = yearRents.reduce(function(s, r) { return s + (r.net || 0); }, 0);
+    var monthsWithData = new Set(yearRents.map(function(r) { return r.month; })).size;
+    var netMonth   = monthsWithData > 0 ? netYear / monthsWithData : 0;
 
     document.getElementById('prop-kpis').innerHTML =
       '<div class="card-sm"><div class="metric-label">Propiedades</div><div class="metric-val" style="font-size:18px">' + props.length + '</div></div>' +
@@ -239,11 +244,12 @@ var Properties = {
 
     var sr = rents.slice().sort(function(a, b) { return b.month.localeCompare(a.month); });
     document.getElementById('prop-rents').innerHTML = sr.length ?
-      '<table><thead><tr><th>Propiedad</th><th>Mes</th><th>Arriendo</th><th>Dividendo</th><th>Comisión</th><th>Otros gastos</th><th>Flujo Neto</th><th>Notas</th><th></th></tr></thead><tbody>' +
+      '<table><thead><tr><th>Propiedad</th><th>Mes</th><th>Arriendo</th><th>Ing. adicionales</th><th>Dividendo</th><th>Comisión</th><th>Otros gastos</th><th>Flujo Neto</th><th>Notas</th><th></th></tr></thead><tbody>' +
       sr.map(function(r) {
         return '<tr><td>' + (r.propertyName || r.propertyId) + '</td>' +
           '<td style="color:var(--muted)">' + r.month + '</td>' +
           '<td>' + Fmt.clp(r.amount) + '</td>' +
+          '<td style="color:var(--cyan)">' + (r.additionalIncome ? Fmt.clp(r.additionalIncome) : '<span style="color:var(--muted)">—</span>') + '</td>' +
           '<td style="color:var(--red)">' + Fmt.clp(r.dividend) + '</td>' +
           '<td style="color:var(--amber)">' + Fmt.clp(r.commission) + '</td>' +
           '<td style="color:var(--amber)">' + (r.extraCommission ? Fmt.clp(r.extraCommission) : '<span style="color:var(--muted)">—</span>') + '</td>' +
