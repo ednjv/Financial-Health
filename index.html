@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>Salud Financiera v1.2</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -179,33 +178,9 @@ select.inp option{background:var(--bg2)}
 <!-- SETTINGS -->
 <div id="view-settings" class="view">
   <div class="stitle">Ajustes</div>
-  <div class="ssub">Parámetros financieros — Importar Excel — Datos locales</div>
+  <div class="ssub">Parámetros financieros — Datos locales</div>
   <div class="g2">
     <div>
-      <!-- EXCEL IMPORT -->
-      <div class="card" style="border-color:rgba(139,92,246,.3)">
-        <div class="sh" style="color:var(--purple)">Importar desde Excel</div>
-        <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.8">
-          Importa snapshots de inversión y propiedades directo desde tus Excel.<br>
-          <strong style="color:var(--text)">Salud_Financiera_2026.xlsx</strong>: inversiones + presupuesto mensual<br>
-          <strong style="color:var(--text)">Resumen_de_propiedades.xlsx</strong>: propiedades e hipotecas
-        </div>
-        <div class="fg">
-          <label class="fl">Hasta qué mes importar</label>
-          <input type="month" id="import-until" class="inp" value="2025-02">
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
-          <label class="btn btn-ghost" style="cursor:pointer;flex:1;text-align:center">
-            📊 Salud Financiera
-            <input type="file" accept=".xlsx" style="display:none" onchange="ExcelImport.importSalud(event)">
-          </label>
-          <label class="btn btn-ghost" style="cursor:pointer;flex:1;text-align:center">
-            🏗 Propiedades
-            <input type="file" accept=".xlsx" style="display:none" onchange="ExcelImport.importPropiedades(event)">
-          </label>
-        </div>
-        <div id="import-result" style="font-size:12px;font-family:var(--mono);min-height:16px;line-height:1.8"></div>
-      </div>
     </div>
     <div>
       <div class="card" style="margin-bottom:14px">
@@ -827,167 +802,6 @@ var Settings = {
   }
 };
 
-// ============================================================
-// EXCEL IMPORT
-// ============================================================
-var ExcelImport = {
-  _setResult: function(msg, color){
-    var el=document.getElementById('import-result');
-    if(el){el.textContent=msg; el.style.color=color||'var(--muted)';}
-  },
-  importSalud: async function(evt){
-    var file=evt.target.files[0]; if(!file)return;
-    this._setResult('Procesando '+file.name+'...','var(--amber)');
-    var untilEl=document.getElementById('import-until');
-    var importUntil=(untilEl&&untilEl.value)?untilEl.value:'2025-02';
-
-    try{
-      var buf=await file.arrayBuffer();
-      var wb=XLSX.read(buf,{type:'array'});
-      Debug.info('Excel loaded: '+wb.SheetNames.join(', '));
-
-      var monthMap={
-        'Enero':'2025-01','Febrero':'2025-02','Marzo':'2025-03','Abril':'2025-04',
-        'Mayo':'2025-05','Junio':'2025-06','Julio':'2025-07','Agosto':'2025-08',
-        'Septiembre':'2025-09','Octubre':'2025-10','Noviembre':'2025-11','Diciembre':'2025-12'
-      };
-      // Fund name → id mapping (matches app defaults)
-      var fundIds={
-        'Fintual':'fintual','FFMM Itau Dinamico':'itaudin',
-        'Quilter/Utmost':'quilter','Interactive Brokers':'ib',
-        'ML':'ml','Scotia':'scotia','Global66':'global66'
-      };
-      var fundNames=['Fintual','FFMM Itau Dinamico','Quilter/Utmost','Interactive Brokers','ML','Scotia','Global66'];
-
-      var allSnaps=[]; var budgetStats=Store.get(SK.budgetStats,{});
-      var snapCount=0, monthCount=0;
-
-      wb.SheetNames.forEach(function(sname){
-        var month=monthMap[sname];
-        if(!month||month>importUntil) return;
-        monthCount++;
-
-        var ws=wb.Sheets[sname];
-        var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true});
-
-        var gn=function(r,c){var v=rows[r]&&rows[r][c];return(v!==null&&v!==undefined&&!isNaN(parseFloat(v)))?parseFloat(v):0;};
-        var gs=function(r,c){var v=rows[r]&&rows[r][c];return v!=null?String(v).trim():'';};
-
-        var salary=gn(3,1); var usdRate=gn(0,1)||950;
-        var leftTotal=gn(8,2); var spentTotal=gn(9,2);
-        var addIncome=gn(10,2); var totalIncome=gn(11,2);
-        var leftToInvest=gn(11,5); var investedTotal=gn(12,5);
-
-        budgetStats[month]={salary:salary,leftTotal:leftTotal,spentTotal:spentTotal,
-          additionalIncome:addIncome,totalIncome:totalIncome,
-          leftToInvest:leftToInvest,investedTotal:investedTotal,usdRate:usdRate};
-
-        // Investment snapshots: rows 4-10, cols 8-14
-        [4,5,6,7,8,9,10].forEach(function(rowIdx,i){
-          var fname=fundNames[i];
-          var fid=fundIds[fname];
-          var prev=gn(rowIdx,9); var curr=gn(rowIdx,10);
-          var retPct=gn(rowIdx,11); var invested=gn(rowIdx,14);
-          if(curr===0&&prev===0) return;
-          allSnaps.push({
-            id:month+'_'+fid,
-            month:month,fundId:fid,fundName:fname,
-            currency:'CLP',// spreadsheet stores all in CLP
-            prevBalance:prev,currBalance:curr,
-            invested:invested,returnPct:retPct,usdRate:usdRate
-          });
-          snapCount++;
-        });
-
-      });
-
-      // Merge investment snapshots (skip if month+fund already exists manually)
-      var invData=Store.get(SK.invest,{funds:[],snapshots:[]});
-      if(!invData.funds||!invData.funds.length) invData.funds=Investments._defs();
-      var existingKeys={};
-      (invData.snapshots||[]).forEach(function(s){existingKeys[s.month+'_'+s.fundId]=true;});
-      allSnaps.forEach(function(s){
-        if(!existingKeys[s.month+'_'+s.fundId]){
-          invData.snapshots.push(s); existingKeys[s.month+'_'+s.fundId]=true;
-        } else {
-          // Update existing imported snapshots (overwrite)
-          invData.snapshots=invData.snapshots.filter(function(x){return!(x.month===s.month&&x.fundId===s.fundId&&x.id===s.id);});
-          invData.snapshots.push(s);
-        }
-      });
-
-      Store.set(SK.invest,invData);
-      Store.set(SK.budgetStats,budgetStats);
-
-      var msg='Importados '+snapCount+' snapshots en '+monthCount+' meses (hasta '+importUntil+')';
-      this._setResult(msg,'var(--green)');
-      Debug.res('Excel import Salud Financiera: '+msg);
-
-      // Auto-navigate to latest imported month in investments
-      var latest=Object.keys(budgetStats).sort().pop();
-      if(latest){var el=document.getElementById('inv-month');if(el)el.value=latest;}
-
-    }catch(e){
-      this._setResult('Error: '+e.message,'var(--red)');
-      Debug.err('Excel import: '+e.message);
-    }
-    evt.target.value='';
-  },
-
-  importPropiedades: async function(evt){
-    var file=evt.target.files[0]; if(!file)return;
-    this._setResult('Procesando '+file.name+'...','var(--amber)');
-    try{
-      var buf=await file.arrayBuffer();
-      var wb=XLSX.read(buf,{type:'array'});
-      var ws=wb.Sheets['Detalle propiedades'];
-      if(!ws){this._setResult('No se encontró la hoja "Detalle propiedades"','var(--red)');return;}
-
-      var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true});
-      var gn=function(r,c){var v=rows[r]&&rows[r][c];return(v!==null&&v!==undefined&&!isNaN(parseFloat(v)))?parseFloat(v):null;};
-      var gs=function(r,c){var v=rows[r]&&rows[r][c];return v!=null?String(v).trim():'';};
-
-      var props=[];
-      for(var r=1;r<=3;r++){
-        if(!rows[r]||!gs(r,0)) continue;
-        var name=gs(r,0);
-        var unit=gs(r,6);
-        var pid='prop'+(r);
-        if(name.indexOf('Punta')!==-1) pid='prop1';
-        else if(unit.indexOf('104')!==-1) pid='prop2';
-        else if(unit.indexOf('405')!==-1) pid='prop3';
-
-        var p={
-          id:pid,name:name,address:gs(r,1),commune:gs(r,2),unit:unit,
-          sqm:gn(r,5),layout:gs(r,4),parking:gs(r,7)||gs(r,8),
-          storage:gs(r,7)&&gs(r,8)?gs(r,8):gs(r,7),
-          ufPrice:gn(r,10),ufFee:gn(r,24),
-          totalInstallments:gn(r,17)?Math.round(gn(r,17)):null,
-          paidInstallments:gn(r,18)?Math.round(gn(r,18)):null,
-          annualRate:gn(r,21),creditType:gs(r,22),bank:gs(r,23),
-          notes:'Importado desde Excel'
-        };
-        var layout=p.layout||'';
-        var dm=layout.match(/(\d)D/); var bm=layout.match(/(\d)B/);
-        if(dm) p.bedrooms=parseInt(dm[1]);
-        if(bm) p.bathrooms=parseInt(bm[1]);
-        props.push(p);
-      }
-
-      if(props.length){
-        Store.set(SK.properties,props);
-        this._setResult('✓ Importadas '+props.length+' propiedades desde Excel','var(--green)');
-        Debug.res('Excel import Propiedades: '+props.length+' props');
-      } else {
-        this._setResult('No se encontraron propiedades en la hoja','var(--amber)');
-      }
-    }catch(e){
-      this._setResult('Error: '+e.message,'var(--red)');
-      Debug.err('Excel import propiedades: '+e.message);
-    }
-    evt.target.value='';
-  }
-};
 
 
 // ============================================================
