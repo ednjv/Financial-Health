@@ -61,13 +61,24 @@ var Properties = {
     this.renderAll();
   },
 
+  _commissionPct: 0,
+
   openRentModal: function() {
     this._ensure();
+    this._commissionPct = (Store.get(SK.config, {}).propCommission || 10);
     document.getElementById('rn-month').value = new Date().toISOString().slice(0, 7);
     ['rn-amount','rn-dividend','rn-commission','rn-net','rn-notes'].forEach(function(id) { document.getElementById(id).value = ''; });
+    var lbl = document.getElementById('rn-commission-label');
+    if (lbl) lbl.textContent = 'Comisión admin (' + this._commissionPct + '%)';
     var sel = document.getElementById('rn-prop');
     sel.innerHTML = this.getAll().map(function(p) { return '<option value="' + p.id + '">' + p.name + ' ' + p.unit + '</option>'; }).join('');
     openModal('m-rent');
+  },
+
+  calcCommission: function() {
+    var a = parseFloat(document.getElementById('rn-amount').value) || 0;
+    document.getElementById('rn-commission').value = a ? Math.round(a * this._commissionPct / 100) : '';
+    this.calcNet();
   },
 
   calcNet: function() {
