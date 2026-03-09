@@ -19,6 +19,7 @@
     <div style="padding:10px 0 6px;font-size:9px;color:var(--muted);letter-spacing:.15em;padding-left:22px;margin-top:6px">PATRIMONIO</div>
     <div class="nav-item active" onclick="nav('investments')"><span style="width:18px">📈</span> Inversiones</div>
     <div class="nav-item" onclick="nav('properties')"><span style="width:18px">🏠</span> Propiedades</div>
+    <div class="nav-item" onclick="nav('emergency')"><span style="width:18px">🆘</span> Fondos Emergencia</div>
     <div style="padding:10px 0 6px;font-size:9px;color:var(--muted);letter-spacing:.15em;padding-left:22px">SISTEMA</div>
     <div class="nav-item" onclick="nav('settings')"><span style="width:18px">⚙</span> Ajustes</div>
   </nav>
@@ -79,6 +80,15 @@
   <div class="g4" style="margin-bottom:16px" id="prop-kpis"></div>
   <div id="prop-cards" class="g2" style="margin-bottom:16px"></div>
   <div class="card"><div class="sh">Historial Arriendos</div><div id="prop-rents"></div></div>
+</div>
+
+<!-- EMERGENCY FUNDS -->
+<div id="view-emergency" class="view">
+  <div class="stitle">Fondos de Emergencia</div>
+  <div class="ssub">Fondos de reserva y metas de seguridad financiera</div>
+  <div style="margin-bottom:16px"><button class="btn btn-cyan" onclick="EmergencyFunds.openAddModal()">+ Añadir Fondo</button></div>
+  <div id="emf-kpis"></div>
+  <div id="emf-funds" style="margin-top:24px"></div>
 </div>
 
 <!-- SETTINGS -->
@@ -192,6 +202,25 @@
   <button class="btn btn-ghost" style="margin-top:10px;width:100%" onclick="closeModal('m-m2')">Cerrar</button>
 </div></div>
 
+<div class="modal-bg" id="m-emergency-fund"><div class="modal">
+  <div class="mtitle" id="emf-modal-title">Crear Fondo de Emergencia</div>
+  <input type="hidden" id="emf-id">
+  <div class="fg"><label class="fl">Nombre del fondo</label><input type="text" id="emf-name" class="inp" placeholder="Ej: Desempleo"></div>
+  <div class="fg"><label class="fl">Descripción / Objetivo</label><input type="text" id="emf-desc" class="inp" placeholder="Ej: 6 meses sin trabajo"></div>
+  <div class="fg"><label class="fl">Inversión base</label><select id="emf-investment" class="inp" data-emf-investment onchange="EmergencyFunds._updatePreview()"></select></div>
+  <div class="divider"></div>
+  <div style="font-size:12px;font-weight:700;color:var(--cyan);margin-bottom:10px">Tipo de Meta</div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">
+    <label style="display:flex;align-items:center;cursor:pointer"><input type="radio" name="emf-goal-type" value="salary_months" data-emf-goal-type onchange="EmergencyFunds._updatePreview()" checked style="margin-right:6px"><span style="font-size:12px">Meses de sueldo</span></label>
+    <label style="display:flex;align-items:center;cursor:pointer"><input type="radio" name="emf-goal-type" value="dividend_months" data-emf-goal-type onchange="EmergencyFunds._updatePreview()" style="margin-right:6px"><span style="font-size:12px">Meses de dividendos</span></label>
+    <label style="display:flex;align-items:center;cursor:pointer"><input type="radio" name="emf-goal-type" value="fixed_amount" data-emf-goal-type onchange="EmergencyFunds._updatePreview()" style="margin-right:6px"><span style="font-size:12px">Monto fijo (CLP)</span></label>
+  </div>
+  <div class="fg"><label class="fl">Valor de la meta</label><input type="number" id="emf-goal-value" class="inp" placeholder="Ej: 6 (meses) o 500000 (monto)" data-emf-goal-value onchange="EmergencyFunds._updatePreview()" oninput="EmergencyFunds._updatePreview()"></div>
+  <div class="fg"><label class="fl">Notas (opcional)</label><input type="text" id="emf-notes" class="inp" placeholder="Tipo de emergencia, observaciones..."></div>
+  <div class="card-sm" style="margin-bottom:14px;background:var(--bg-secondary)" id="emf-preview"><div style="font-size:12px;color:var(--muted)">Completa los campos para ver preview</div></div>
+  <div style="display:flex;gap:8px"><button class="btn btn-cyan" onclick="EmergencyFunds.saveFund()">Guardar</button><button class="btn btn-ghost" onclick="EmergencyFunds.closeModal()">Cancelar</button></div>
+</div></div>
+
 <!-- JS modules — load order matters (no bundler) -->
 <script src="js/core/store.js"></script>
 <script src="js/core/debug.js"></script>
@@ -200,6 +229,7 @@
 <script src="js/infrastructure/market.js"></script>
 <script src="js/features/investments.js"></script>
 <script src="js/features/properties.js"></script>
+<script src="js/features/emergency-funds.js"></script>
 <script src="js/features/settings.js"></script>
 <script src="js/features/data-io.js"></script>
 <script src="js/utils.js"></script>
