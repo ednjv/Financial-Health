@@ -62,16 +62,34 @@ var Properties = {
   },
 
   _commissionPct: 0,
+  _editingRentId: null,
 
-  openRentModal: function() {
+  openRentModal: function(id) {
     this._ensure();
     this._commissionPct = (Store.get(SK.config, {}).propCommission || 10);
-    document.getElementById('rn-month').value = new Date().toISOString().slice(0, 7);
-    ['rn-amount','rn-dividend','rn-commission','rn-net','rn-notes'].forEach(function(id) { document.getElementById(id).value = ''; });
     var lbl = document.getElementById('rn-commission-label');
     if (lbl) lbl.textContent = 'Comisión admin (' + this._commissionPct + '%)';
     var sel = document.getElementById('rn-prop');
     sel.innerHTML = this.getAll().map(function(p) { return '<option value="' + p.id + '">' + p.name + ' ' + p.unit + '</option>'; }).join('');
+    var title = document.querySelector('#m-rent .mtitle');
+    if (id) {
+      var r = this.getRents().filter(function(x) { return x.id === id; })[0];
+      if (!r) return;
+      this._editingRentId = id;
+      if (title) title.textContent = 'Editar Arriendo';
+      sel.value = r.propertyId;
+      document.getElementById('rn-month').value = r.month;
+      document.getElementById('rn-amount').value = r.amount || '';
+      document.getElementById('rn-dividend').value = r.dividend || '';
+      document.getElementById('rn-commission').value = r.commission || '';
+      document.getElementById('rn-net').value = r.net || '';
+      document.getElementById('rn-notes').value = r.notes || '';
+    } else {
+      this._editingRentId = null;
+      if (title) title.textContent = 'Registrar Arriendo';
+      document.getElementById('rn-month').value = new Date().toISOString().slice(0, 7);
+      ['rn-amount','rn-dividend','rn-commission','rn-net','rn-notes'].forEach(function(eid) { document.getElementById(eid).value = ''; });
+    }
     openModal('m-rent');
   },
 
@@ -91,7 +109,7 @@ var Properties = {
   saveRent: function() {
     var sel = document.getElementById('rn-prop');
     var r = {
-      id: uid(), propertyId: sel.value,
+      id: this._editingRentId || uid(), propertyId: sel.value,
       propertyName: sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : '',
       month: document.getElementById('rn-month').value,
       amount: parseFloat(document.getElementById('rn-amount').value) || 0,
@@ -100,7 +118,9 @@ var Properties = {
       net: parseFloat(document.getElementById('rn-net').value) || 0,
       notes: document.getElementById('rn-notes').value
     };
-    var rents = this.getRents(); rents.push(r); Store.set(SK.rents, rents);
+    var rents = this.getRents().filter(function(x) { return x.id !== r.id; }); rents.push(r);
+    Store.set(SK.rents, rents);
+    this._editingRentId = null;
     closeModal('m-rent'); this.renderAll();
   },
 
@@ -214,7 +234,10 @@ var Properties = {
           '<td style="color:var(--amber)">' + Fmt.clp(r.commission) + '</td>' +
           '<td style="color:' + (r.net >= 0 ? 'var(--green)' : 'var(--red)') + '"><strong>' + Fmt.clp(r.net) + '</strong></td>' +
           '<td style="font-size:11px;color:var(--muted)">' + (r.notes || '') + '</td>' +
-          '<td><button class="btn btn-red" style="padding:2px 7px;font-size:10px" onclick="Properties.deleteRent(\'' + r.id + '\')">×</button></td></tr>';
+          '<td style="white-space:nowrap">' +
+            '<button class="btn btn-ghost" style="padding:2px 7px;font-size:10px;margin-right:3px" onclick="Properties.openRentModal(\'' + r.id + '\')">✎</button>' +
+            '<button class="btn btn-red" style="padding:2px 7px;font-size:10px" onclick="Properties.deleteRent(\'' + r.id + '\')">×</button>' +
+          '</td></tr>';
       }).join('') + '</tbody></table>' :
       '<p style="font-size:13px;color:var(--muted);padding:16px">Sin arriendos registrados</p>';
   }
