@@ -64,6 +64,7 @@ var Properties = {
 
   _commissionPct: 0,
   _editingRentId: null,
+  _editingM2Id: null,
 
   openRentModal: function(id) {
     this._ensure();
@@ -141,29 +142,60 @@ var Properties = {
     closeModal('m-rent'); this.renderAll();
   },
 
-  openM2Modal: function() {
+  openM2Modal: function(id) {
     this._ensure();
-    document.getElementById('m2-month').value = new Date().toISOString().slice(0, 7);
-    document.getElementById('m2-val').value = '';
+    var title = document.querySelector('#m-m2 .mtitle');
     var sel = document.getElementById('m2-prop');
     sel.innerHTML = this.getAll().map(function(p) { return '<option value="' + p.id + '">' + p.name + '</option>'; }).join('');
+    if (id) {
+      var m = this.getM2().filter(function(x) { return x.id === id; })[0];
+      if (!m) return;
+      this._editingM2Id = id;
+      if (title) title.textContent = 'Editar Valor m²';
+      sel.value = m.propertyId;
+      document.getElementById('m2-month').value = m.month;
+      document.getElementById('m2-val').value = m.value || '';
+    } else {
+      this._editingM2Id = null;
+      if (title) title.textContent = 'Registrar Valor m²';
+      document.getElementById('m2-month').value = new Date().toISOString().slice(0, 7);
+      document.getElementById('m2-val').value = '';
+    }
     this._renderM2(); openModal('m-m2');
   },
 
   saveM2: function() {
     var data = this.getM2();
-    data.push({id:uid(), propertyId:document.getElementById('m2-prop').value, month:document.getElementById('m2-month').value, value:parseFloat(document.getElementById('m2-val').value) || 0});
-    Store.set(SK.m2, data); this._renderM2();
+    var m = {
+      id: this._editingM2Id || uid(),
+      propertyId: document.getElementById('m2-prop').value,
+      month: document.getElementById('m2-month').value,
+      value: parseFloat(document.getElementById('m2-val').value) || 0
+    };
+    data = data.filter(function(x) { return x.id !== m.id; });
+    data.push(m);
+    Store.set(SK.m2, data);
+    this._editingM2Id = null;
+    closeModal('m-m2'); this._renderM2(); this.renderAll();
+  },
+
+  deleteM2: function(id) {
+    if (!confirm('Eliminar registro de valor m²?')) return;
+    Store.set(SK.m2, this.getM2().filter(function(m) { return m.id !== id; }));
+    this._renderM2(); this.renderAll();
   },
 
   _renderM2: function() {
-    var data = this.getM2().slice().sort(function(a, b) { return b.month.localeCompare(a.month); });
+    var data = this.getM2().slice().sort(function(a, b) { return new Date(b.month + '-01') - new Date(a.month + '-01'); });
     var props = this.getAll(); var el = document.getElementById('m2-history'); if (!el) return;
     el.innerHTML = data.length ?
-      '<table><thead><tr><th>Propiedad</th><th>Mes</th><th>Valor m²</th></tr></thead><tbody>' +
+      '<table><thead><tr><th>Propiedad</th><th>Mes</th><th>Valor m²</th><th></th></tr></thead><tbody>' +
       data.map(function(d) {
         var p = props.filter(function(x) { return x.id === d.propertyId; })[0];
-        return '<tr><td>' + (p ? p.name : d.propertyId) + '</td><td>' + d.month + '</td><td>' + Fmt.clp(d.value) + '</td></tr>';
+        return '<tr><td>' + (p ? p.name : d.propertyId) + '</td><td>' + d.month + '</td><td>' + Fmt.clp(d.value) + '</td><td style="white-space:nowrap">' +
+          '<button class="btn btn-ghost" style="padding:2px 7px;font-size:10px;margin-right:3px" onclick="Properties.openM2Modal(\'' + d.id + '\')">✎</button>' +
+          '<button class="btn btn-red" style="padding:2px 7px;font-size:10px" onclick="Properties.deleteM2(\'' + d.id + '\')">×</button>' +
+          '</td></tr>';
       }).join('') + '</tbody></table>' :
       '<p style="font-size:12px;color:var(--muted)">Sin registros</p>';
   },
@@ -208,8 +240,8 @@ var Properties = {
       var rem = (p.totalInstallments || 0) - (p.paidInstallments || 0);
       var debtUF = p.ufFee && rem ? p.ufFee * rem : 0;
       var progress = p.totalInstallments ? (p.paidInstallments || 0) / p.totalInstallments * 100 : 0;
-      var pRents = rents.filter(function(r) { return r.propertyId === p.id; }).sort(function(a, b) { return b.month.localeCompare(a.month); }).slice(0, 3);
-      var pm2 = m2data.filter(function(m) { return m.propertyId === p.id; }).sort(function(a, b) { return b.month.localeCompare(a.month); });
+      var pRents = rents.filter(function(r) { return r.propertyId === p.id; }).sort(function(a, b) { return new Date(b.month + '-01') - new Date(a.month + '-01'); }).slice(0, 3);
+      var pm2 = m2data.filter(function(m) { return m.propertyId === p.id; }).sort(function(a, b) { return new Date(b.month + '-01') - new Date(a.month + '-01'); });
       var lm2 = pm2[0]; var pvm2 = pm2[1]; var plus = (lm2 && pvm2) ? (lm2.value - pvm2.value) / pvm2.value * 100 : null;
       return '<div class="card">' +
         '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">' +
@@ -242,7 +274,7 @@ var Properties = {
         '</div>';
     }).join('');
 
-    var sr = rents.slice().sort(function(a, b) { return b.month.localeCompare(a.month); });
+    var sr = rents.slice().sort(function(a, b) { return new Date(b.month + '-01') - new Date(a.month + '-01'); });
     document.getElementById('prop-rents').innerHTML = sr.length ?
       '<table><thead><tr><th>Propiedad</th><th>Mes</th><th>Arriendo</th><th>Ing. adicionales</th><th>Dividendo</th><th>Comisión</th><th>Otros gastos</th><th>Flujo Neto</th><th>Notas</th><th></th></tr></thead><tbody>' +
       sr.map(function(r) {
