@@ -5,7 +5,6 @@
 var SK = {
   config:      'sfv1:config',
   invest:      'sfv1:investments',
-  goals:       'sfv1:goals',
   properties:  'sfv1:properties',
   rents:       'sfv1:rents',
   m2:          'sfv1:m2',

@@ -1,7 +1,7 @@
 'use strict';
 // ============================================================
 // APP UTILITIES — navigation, modals, uid
-// Depends on: Debug, Investments, Goals, Properties, Settings
+// Depends on: Debug, Investments, Properties, Settings
 // ============================================================
 
 function uid() {
@@ -25,7 +25,6 @@ function nav(view) {
   });
   Debug.info('nav → ' + view);
   if (view === 'investments') Investments.renderAll();
-  if (view === 'goals')       Goals.renderAll();
   if (view === 'properties')  Properties.renderAll();
   if (view === 'settings')    Settings.load();
 }

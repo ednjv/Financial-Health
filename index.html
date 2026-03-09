@@ -18,7 +18,6 @@
   <nav style="flex:1;overflow-y:auto">
     <div style="padding:10px 0 6px;font-size:9px;color:var(--muted);letter-spacing:.15em;padding-left:22px;margin-top:6px">PATRIMONIO</div>
     <div class="nav-item active" onclick="nav('investments')"><span style="width:18px">📈</span> Inversiones</div>
-    <div class="nav-item" onclick="nav('goals')"><span style="width:18px">🎯</span> Fondos</div>
     <div class="nav-item" onclick="nav('properties')"><span style="width:18px">🏠</span> Propiedades</div>
     <div style="padding:10px 0 6px;font-size:9px;color:var(--muted);letter-spacing:.15em;padding-left:22px">SISTEMA</div>
     <div class="nav-item" onclick="nav('settings')"><span style="width:18px">⚙</span> Ajustes</div>
@@ -47,7 +46,6 @@
   <div class="ssub">Snapshots mensuales — rendimiento y sugerencias de asignación</div>
   <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:flex-end">
     <button class="btn btn-cyan" onclick="Investments.openSnapModal(null)">+ Snapshot</button>
-    <button class="btn btn-ghost" onclick="Investments.openFundModal()">Gestionar Fondos</button>
     <div style="margin-left:auto;display:flex;align-items:flex-end;gap:6px">
       <button class="btn btn-ghost" style="padding:7px 10px" onclick="Investments.prevMonth()">◀</button>
       <div><label class="fl">Mes</label><input type="month" id="inv-month" class="inp" style="width:155px" onchange="Investments.renderAll()"></div>
@@ -67,14 +65,6 @@
     <div class="card"><div class="sh">Histórico por Fondo</div><div class="cw"><canvas id="ch-inv-hist"></canvas></div></div>
     <div class="card"><div class="sh">Rendimiento (%)</div><div class="cw"><canvas id="ch-inv-ret"></canvas></div></div>
   </div>
-</div>
-
-<!-- GOALS -->
-<div id="view-goals" class="view">
-  <div class="stitle">Fondos y Metas</div>
-  <div class="ssub">Fondo emergencia — Dividendos — Meta fija</div>
-  <div style="margin-bottom:16px"><button class="btn btn-cyan" onclick="Goals.openModal()">+ Nueva Meta</button></div>
-  <div id="goals-grid" class="g3"></div>
 </div>
 
 <!-- PROPERTIES -->
@@ -166,27 +156,6 @@
   <div style="display:flex;gap:8px"><button class="btn btn-cyan" onclick="Investments.saveSnap()">Guardar</button><button class="btn btn-ghost" onclick="closeModal('m-snapshot')">Cancelar</button></div>
 </div></div>
 
-<div class="modal-bg" id="m-funds"><div class="modal">
-  <div class="mtitle">Gestionar Fondos</div>
-  <div id="funds-list" style="margin-bottom:14px"></div>
-  <div class="divider"></div>
-  <div class="sh">Nuevo Fondo</div>
-  <div class="fr"><div class="fg"><label class="fl">Nombre</label><input type="text" id="fn-name" class="inp"></div><div class="fg"><label class="fl">Moneda</label><select id="fn-currency" class="inp"><option value="CLP">CLP</option><option value="USD">USD</option></select></div></div>
-  <div class="fg"><label class="fl">Descripción</label><input type="text" id="fn-desc" class="inp"></div>
-  <div style="display:flex;gap:8px"><button class="btn btn-cyan" onclick="Investments.saveFund()">Agregar</button><button class="btn btn-ghost" onclick="closeModal('m-funds')">Cerrar</button></div>
-</div></div>
-
-<div class="modal-bg" id="m-goal"><div class="modal">
-  <div class="mtitle">Meta de Fondo</div>
-  <input type="hidden" id="go-id">
-  <div class="fg"><label class="fl">Nombre</label><input type="text" id="go-name" class="inp"></div>
-  <div class="fg"><label class="fl">Tipo</label><select id="go-type" class="inp" onchange="Goals.toggleType()"><option value="months">Meses de gasto</option><option value="fixed">Monto fijo</option><option value="property">Meses dividendo propiedades</option></select></div>
-  <div id="go-months-sec"><div class="fr"><div class="fg"><label class="fl">Meses cobertura</label><input type="number" id="go-months" class="inp" value="6"></div><div class="fg"><label class="fl">Gasto mensual ref. (CLP)</label><input type="number" id="go-spend" class="inp" value="0"></div></div></div>
-  <div id="go-fixed-sec" style="display:none"><div class="fg"><label class="fl">Monto objetivo (CLP)</label><input type="number" id="go-target" class="inp" value="0"></div></div>
-  <div class="fr"><div class="fg"><label class="fl">Valor actual (CLP)</label><input type="number" id="go-current" class="inp" value="0"></div><div class="fg"><label class="fl">Aporte mensual (CLP)</label><input type="number" id="go-monthly" class="inp" value="0"></div></div>
-  <div class="fg"><label class="fl">Fondo respaldo</label><input type="text" id="go-fund" class="inp" placeholder="ML, Fintual..."></div>
-  <div style="display:flex;gap:8px"><button class="btn btn-cyan" onclick="Goals.save()">Guardar</button><button class="btn btn-ghost" onclick="closeModal('m-goal')">Cancelar</button></div>
-</div></div>
 
 <div class="modal-bg" id="m-property"><div class="modal modal-wide">
   <div class="mtitle" id="prop-modal-title">Agregar Propiedad</div>
@@ -230,7 +199,6 @@
 <script src="js/shared/charts.js"></script>
 <script src="js/infrastructure/market.js"></script>
 <script src="js/features/investments.js"></script>
-<script src="js/features/goals.js"></script>
 <script src="js/features/properties.js"></script>
 <script src="js/features/settings.js"></script>
 <script src="js/features/data-io.js"></script>
