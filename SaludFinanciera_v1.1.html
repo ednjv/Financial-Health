@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Salud Financiera v1.1</title>
+<title>Salud Financiera v1.2</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -83,7 +83,6 @@ select.inp option{background:var(--bg2)}
 .fl{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em;display:block;margin-bottom:4px}
 .fr{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .sh{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px}
-#bridge-banner{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:10px;padding:12px 16px;margin-bottom:16px;display:none;align-items:center;gap:12px;font-size:13px}
 #debug-panel{position:fixed;bottom:0;left:210px;right:0;height:220px;background:#050709;border-top:2px solid var(--cyan);z-index:100;display:none;flex-direction:column}
 #debug-panel.open{display:flex}
 #debug-header{display:flex;align-items:center;gap:8px;padding:5px 12px;background:rgba(0,212,255,.05);border-bottom:1px solid rgba(0,212,255,.15);flex-shrink:0;flex-wrap:wrap}
@@ -99,27 +98,16 @@ select.inp option{background:var(--bg2)}
   <div style="padding:18px 14px 10px">
     <div style="font-size:14px;font-weight:800;color:var(--cyan)">SALUD</div>
     <div style="font-size:14px;font-weight:800;margin-top:-2px">FINANCIERA</div>
-    <div style="font-size:9px;color:var(--muted);letter-spacing:.2em;font-family:var(--mono)">v1.1</div>
-  </div>
-  <div id="conn-badge" style="display:flex;align-items:center;gap:6px;font-size:11px;font-family:var(--mono);padding:4px 10px;border-radius:99px;background:var(--bg3);margin:0 10px 10px;cursor:pointer;width:fit-content" onclick="Settings.selectDir()">
-    <span class="dot da" id="conn-dot"></span><span id="conn-text">Configurar bridge</span>
+    <div style="font-size:9px;color:var(--muted);letter-spacing:.2em;font-family:var(--mono)">v1.2</div>
   </div>
   <nav style="flex:1;overflow-y:auto">
-    <div style="padding:2px 0 6px;font-size:9px;color:var(--muted);letter-spacing:.15em;padding-left:22px;margin-top:6px">PRINCIPAL</div>
-    <div class="nav-item active" onclick="nav('dashboard')"><span style="width:18px">⚡</span> Dashboard</div>
-    <div class="nav-item" onclick="nav('assets')"><span style="width:18px">🏠</span> Activos</div>
-    <div class="nav-item" onclick="nav('expenses')"><span style="width:18px">📊</span> Gastos</div>
-    <div style="padding:10px 0 6px;font-size:9px;color:var(--muted);letter-spacing:.15em;padding-left:22px">PATRIMONIO</div>
-    <div class="nav-item" onclick="nav('investments')"><span style="width:18px">📈</span> Inversiones</div>
+    <div style="padding:10px 0 6px;font-size:9px;color:var(--muted);letter-spacing:.15em;padding-left:22px;margin-top:6px">PATRIMONIO</div>
+    <div class="nav-item active" onclick="nav('investments')"><span style="width:18px">📈</span> Inversiones</div>
     <div class="nav-item" onclick="nav('goals')"><span style="width:18px">🎯</span> Fondos</div>
-    <div class="nav-item" onclick="nav('properties')"><span style="width:18px">🏗</span> Propiedades</div>
-    <div class="nav-item" onclick="nav('projects')"><span style="width:18px">🚀</span> Proyectos</div>
+    <div class="nav-item" onclick="nav('properties')"><span style="width:18px">🏠</span> Propiedades</div>
     <div style="padding:10px 0 6px;font-size:9px;color:var(--muted);letter-spacing:.15em;padding-left:22px">SISTEMA</div>
     <div class="nav-item" onclick="nav('settings')"><span style="width:18px">⚙</span> Ajustes</div>
   </nav>
-  <div style="padding:10px 12px;border-top:1px solid var(--border)">
-    <button class="btn btn-ghost" style="width:100%;font-size:12px" onclick="App.syncAll()">↻ Sincronizar</button>
-  </div>
 </div>
 
 <div id="main">
@@ -137,105 +125,9 @@ select.inp option{background:var(--bg2)}
 </div>
 
 <div id="content">
-<div id="bridge-banner">
-  <span style="color:var(--amber)">⚠</span>
-  <span>Bridge no configurado. Sin bridge no hay datos en tiempo real de MoneyBook.</span>
-  <button class="btn btn-amber" style="padding:4px 12px;font-size:12px;margin-left:auto" onclick="Settings.selectDir()">Seleccionar directorio bridge</button>
-</div>
-
-<!-- DASHBOARD -->
-<div id="view-dashboard" class="view active">
-  <div class="stitle">Dashboard</div>
-  <div class="ssub" id="dash-ts">Resumen financiero — datos desde bridge + cache</div>
-
-  <div class="g5" style="margin-bottom:16px">
-    <div class="card bc"><div class="metric-label">Patrimonio Total</div><div class="metric-val" style="color:var(--cyan)" id="dk-patrimonio">--</div></div>
-    <div class="card"><div class="metric-label">Activos Líquidos</div><div class="metric-val" style="color:var(--green)" id="dk-liquid">--</div></div>
-    <div class="card"><div class="metric-label">Inversiones</div><div class="metric-val" style="color:var(--purple)" id="dk-invest">--</div></div>
-    <div class="card brc"><div class="metric-label">Deuda Tarjetas</div><div class="metric-val" style="color:var(--red)" id="dk-debt">--</div></div>
-    <div class="card" style="border-color:rgba(16,185,129,.25)">
-      <div class="metric-label">Ratio Endeudamiento</div>
-      <div class="metric-val" id="dk-debtRatio">--</div>
-      <div class="kpi-delta" style="color:var(--muted)" id="dk-debtRatioNote"></div>
-    </div>
-  </div>
-
-  <div class="g4" style="margin-bottom:16px">
-    <div class="card-sm" style="border-color:rgba(16,185,129,.2)">
-      <div class="metric-label">Flujo Neto Mes</div>
-      <div class="metric-val" style="font-size:17px" id="dk-cashflow">--</div>
-      <div class="kpi-delta" id="dk-cashflowNote"></div>
-    </div>
-    <div class="card-sm">
-      <div class="metric-label">Ingreso Total</div>
-      <div class="metric-val" style="color:var(--green);font-size:17px" id="dk-income">--</div>
-    </div>
-    <div class="card-sm">
-      <div class="metric-label">Gasto Total</div>
-      <div class="metric-val" style="color:var(--red);font-size:17px" id="dk-spent">--</div>
-    </div>
-    <div class="card-sm">
-      <div class="metric-label">Tasa Ahorro</div>
-      <div class="metric-val" style="color:var(--purple);font-size:17px" id="dk-savingRate">--</div>
-    </div>
-  </div>
-
-  <div class="g2" style="margin-bottom:16px">
-    <div class="card"><div class="sh">Evolución Patrimonio</div><div class="cw"><canvas id="ch-patrimonio"></canvas></div></div>
-    <div class="card"><div class="sh">Composición Activos</div><div class="cw"><canvas id="ch-donut"></canvas></div></div>
-  </div>
-  <div class="g3">
-    <div class="card"><div class="sh">Presupuesto 50/10/40</div><div id="dk-budget"></div></div>
-    <div class="card"><div class="sh">Fondos Emergencia</div><div id="dk-goals"></div></div>
-    <div class="card"><div class="sh">Tarjetas de Crédito</div><div id="dk-cards"></div></div>
-  </div>
-</div>
-
-<!-- ASSETS -->
-<div id="view-assets" class="view">
-  <div class="stitle">Activos</div>
-  <div class="ssub">Datos desde MoneyBook via bridge</div>
-  <div style="display:flex;gap:8px;margin-bottom:16px;align-items:center;flex-wrap:wrap">
-    <button class="btn btn-cyan" onclick="Assets.refresh()">↻ Sincronizar via Bridge</button>
-    <span style="font-size:11px;color:var(--muted);font-family:var(--mono)" id="assets-ts"></span>
-  </div>
-  <div id="assets-groups" class="g2" style="margin-bottom:16px"></div>
-  <div class="card"><div class="sh">Detalle Completo</div><div id="assets-table"></div></div>
-</div>
-
-<!-- EXPENSES -->
-<div id="view-expenses" class="view">
-  <div class="stitle">Análisis de Gastos</div>
-  <div class="ssub">Via BridgeWorker.ps1 — o importar desde Excel</div>
-  <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:flex-end">
-    <div><label class="fl">Desde</label><input type="date" id="exp-start" class="inp" style="width:145px"></div>
-    <div><label class="fl">Hasta</label><input type="date" id="exp-end" class="inp" style="width:145px"></div>
-    <div><label class="fl">Categoría</label><input type="text" id="exp-filter" class="inp" placeholder="Buscar..." style="width:170px" oninput="Expenses.applyFilter()"></div>
-    <div><label class="fl">Tipo</label><select id="exp-type" class="inp" style="width:110px" onchange="Expenses.applyFilter()"><option value="">Todos</option><option value="out">Gastos</option><option value="in">Ingresos</option></select></div>
-    <button class="btn btn-cyan" id="exp-fetch-btn" onclick="Expenses.fetch()">Cargar via Bridge</button>
-    <button class="btn btn-ghost" onclick="Expenses.loadCached()">Usar Caché</button>
-  </div>
-  <div class="g4" style="margin-bottom:16px">
-    <div class="card-sm"><div class="metric-label">Ingresos</div><div class="metric-val" style="color:var(--green);font-size:17px" id="ex-income">$0</div></div>
-    <div class="card-sm"><div class="metric-label">Gastos</div><div class="metric-val" style="color:var(--red);font-size:17px" id="ex-spent">$0</div></div>
-    <div class="card-sm"><div class="metric-label">Margen Neto</div><div class="metric-val" style="font-size:17px" id="ex-net">$0</div></div>
-    <div class="card-sm"><div class="metric-label">Tasa Ahorro</div><div class="metric-val" style="color:var(--purple);font-size:17px" id="ex-rate">0%</div></div>
-  </div>
-  <div class="g2" style="margin-bottom:16px">
-    <div class="card"><div class="sh">Por Categoría</div><div class="cw"><canvas id="ch-exp-pie"></canvas></div></div>
-    <div class="card"><div class="sh">Top Categorías</div><div class="cw"><canvas id="ch-exp-bar"></canvas></div></div>
-  </div>
-  <div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <div class="sh" style="margin-bottom:0">Transacciones</div>
-      <span style="font-size:11px;color:var(--muted);font-family:var(--mono)" id="ex-count">0 registros</span>
-    </div>
-    <div id="ex-table" style="max-height:380px;overflow-y:auto"></div>
-  </div>
-</div>
 
 <!-- INVESTMENTS -->
-<div id="view-investments" class="view">
+<div id="view-investments" class="view active">
   <div class="stitle">Inversiones</div>
   <div class="ssub">Snapshots mensuales — rendimiento y sugerencias de asignación</div>
   <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:flex-end">
@@ -284,47 +176,17 @@ select.inp option{background:var(--bg2)}
   <div class="card"><div class="sh">Historial Arriendos</div><div id="prop-rents"></div></div>
 </div>
 
-<!-- PROJECTS -->
-<div id="view-projects" class="view">
-  <div class="stitle">Proyectos Personales</div>
-  <div class="ssub">Metas de capital para negocios</div>
-  <div style="margin-bottom:16px"><button class="btn btn-cyan" onclick="Projects.openModal()">+ Nuevo Proyecto</button></div>
-  <div id="proj-grid" class="g3"></div>
-</div>
-
 <!-- SETTINGS -->
 <div id="view-settings" class="view">
   <div class="stitle">Ajustes</div>
-  <div class="ssub">Bridge — API — Parámetros financieros — Importar Excel</div>
+  <div class="ssub">Parámetros financieros — Importar Excel — Datos locales</div>
   <div class="g2">
     <div>
-      <div class="card" style="margin-bottom:14px;border-color:rgba(245,158,11,.2)">
-        <div class="sh" style="color:var(--amber)">Bridge MoneyBook (File-based, no CORS)</div>
-        <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.8">
-          El bridge evita CORS. El archivo <code style="color:var(--cyan)">BridgeWorker.ps1</code> debe estar corriendo en PowerShell.
-          Selecciona el directorio <code style="color:var(--cyan)">MoneyBookBridge</code> (mismo que usa el script PS).
-        </div>
-        <div class="fg"><label class="fl">Directorio MoneyBookBridge</label>
-          <button class="btn btn-amber" style="width:100%" onclick="Settings.selectDir()">Seleccionar directorio</button>
-          <div style="font-size:11px;color:var(--muted);margin-top:5px;font-family:var(--mono)" id="cfg-dir-label">No configurado</div>
-        </div>
-        <div class="fg"><label class="fl">Base URL MoneyBook</label><input type="text" id="cfg-url" class="inp" placeholder="http://192.168.1.93:8888"></div>
-        <div class="fg"><label class="fl">Endpoint Gastos</label><input type="text" id="cfg-ep" class="inp" value="/moneyBook/getSpendListData"></div>
-        <div class="fg"><label class="fl">Endpoint Activos</label><input type="text" id="cfg-ep-assets" class="inp" value="/moneyBook/getAssetData"></div>
-        <div class="fg"><label class="fl">Endpoint Dashboard</label><input type="text" id="cfg-ep-dash" class="inp" value="/moneyBook/getDashBoardData"></div>
-        <div class="fg"><label class="fl">Endpoint Tarjetas</label><input type="text" id="cfg-ep-cards" class="inp" value="/moneyBook/getCardData"></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-amber" onclick="Settings.testBridge('assets')" style="flex:1">Probar Activos</button>
-          <button class="btn btn-amber" onclick="Settings.testBridge('dash')" style="flex:1">Probar Dashboard</button>
-        </div>
-        <div id="cfg-test-result" style="margin-top:8px;font-size:12px;font-family:var(--mono);min-height:16px;line-height:1.6"></div>
-      </div>
-
       <!-- EXCEL IMPORT -->
       <div class="card" style="border-color:rgba(139,92,246,.3)">
         <div class="sh" style="color:var(--purple)">Importar desde Excel</div>
         <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.8">
-          Importa snapshots de inversión, gastos mensuales y propiedades directo desde tus Excel.<br>
+          Importa snapshots de inversión y propiedades directo desde tus Excel.<br>
           <strong style="color:var(--text)">Salud_Financiera_2026.xlsx</strong>: inversiones + presupuesto mensual<br>
           <strong style="color:var(--text)">Resumen_de_propiedades.xlsx</strong>: propiedades e hipotecas
         </div>
@@ -371,12 +233,9 @@ select.inp option{background:var(--bg2)}
       <div class="card">
         <div class="sh">Arquitectura</div>
         <div style="font-size:11px;color:var(--muted);line-height:2;font-family:var(--mono)">
-          API mode: Bridge-only (no CORS)<br>
-          Bridge: BridgeWorker.ps1 v2.0<br>
-          Protocol: request.json → response.json<br>
           Storage: localStorage sfv1: prefix<br>
           Charts: Chart.js v4 | SheetJS v0.20<br>
-          App: v1.1
+          App: v1.2
         </div>
       </div>
     </div>
@@ -475,27 +334,15 @@ select.inp option{background:var(--bg2)}
   <button class="btn btn-ghost" style="margin-top:10px;width:100%" onclick="closeModal('m-m2')">Cerrar</button>
 </div></div>
 
-<div class="modal-bg" id="m-project"><div class="modal">
-  <div class="mtitle">Proyecto Personal</div>
-  <input type="hidden" id="pj-id">
-  <div class="fg"><label class="fl">Nombre</label><input type="text" id="pj-name" class="inp"></div>
-  <div class="fg"><label class="fl">Descripción</label><input type="text" id="pj-desc" class="inp"></div>
-  <div class="fr"><div class="fg"><label class="fl">Capital objetivo (CLP)</label><input type="number" id="pj-goal" class="inp"></div><div class="fg"><label class="fl">Capital actual (CLP)</label><input type="number" id="pj-current" class="inp"></div></div>
-  <div class="fg"><label class="fl">Aporte mensual (CLP)</label><input type="number" id="pj-monthly" class="inp"></div>
-  <div style="display:flex;gap:8px"><button class="btn btn-cyan" onclick="Projects.save()">Guardar</button><button class="btn btn-ghost" onclick="closeModal('m-project')">Cancelar</button></div>
-</div></div>
-
 <script>
 'use strict';
 // ============================================================
 // STORAGE
 // ============================================================
 var SK = {
-  config:'sfv1:config', invest:'sfv1:investments', properties:'sfv1:properties',
-  rents:'sfv1:rents', m2:'sfv1:m2', goals:'sfv1:goals', projects:'sfv1:projects',
-  cAssets:'sfv1:cache:assets', cCards:'sfv1:cache:cards', cDash:'sfv1:cache:dash',
-  cExpenses:'sfv1:cache:expenses', cMarket:'sfv1:cache:market',
-  budgetStats:'sfv1:budgetStats'
+  config:'sfv1:config', invest:'sfv1:investments', goals:'sfv1:goals',
+  properties:'sfv1:properties', rents:'sfv1:rents', m2:'sfv1:m2',
+  cMarket:'sfv1:cache:market', budgetStats:'sfv1:budgetStats'
 };
 var Store = {
   get:  function(k,d){ try{var v=localStorage.getItem(k);return v?JSON.parse(v):(d!==undefined?d:null);}catch(e){return d!==undefined?d:null;} },
@@ -554,51 +401,6 @@ var Debug = {
   }
 };
 
-// ============================================================
-// BRIDGE
-// ============================================================
-var Bridge = {
-  dirHandle: null,
-  isReady: function(){ return !!this.dirHandle; },
-  _setStatus: function(ok){
-    var dot=document.getElementById('conn-dot'),txt=document.getElementById('conn-text');
-    if(dot)dot.className='dot '+(ok?'dc':'da');
-    if(txt)txt.textContent=ok?'Bridge conectado':'Configurar bridge';
-  },
-  request: async function(endpoint, params){
-    if(!this.dirHandle) throw new Error('Bridge no configurado. Selecciona el directorio en Ajustes.');
-    var cfg=Store.get(SK.config,{});
-    var payload={baseUrl:cfg.baseUrl||'http://192.168.1.93:8888',endpoint:endpoint,params:params||{}};
-    Debug.req('Bridge → '+payload.baseUrl+endpoint,params);
-    var fh=await this.dirHandle.getFileHandle('request.json',{create:true});
-    var wr=await fh.createWritable(); await wr.write(JSON.stringify(payload)); await wr.close();
-    Debug.info('request.json escrito. Esperando BridgeWorker.ps1...');
-    var response=await this._poll();
-    if(response.ok===false) throw new Error(response.error||'Bridge error');
-    var data;
-    if(response.format==='jsobj'){
-      Debug.warn('JS object notation — eval via Function()');
-      try{ data=(new Function('return ('+response.raw+')'))(); }
-      catch(e){ throw new Error('JS-obj parse failed: '+e.message); }
-    } else { data=response.data; }
-    Debug.res('Bridge ← '+endpoint+' ('+response.format+')', Array.isArray(data)?{count:data.length,sample:data[0]}:data);
-    return data;
-  },
-  _poll: function(){
-    return new Promise(function(resolve,reject){
-      var t=setTimeout(function(){clearInterval(iv);reject(new Error('Bridge timeout (30s). Verifica que BridgeWorker.ps1 esté corriendo.'));},30000);
-      var iv=setInterval(async function(){
-        try{
-          var h=await Bridge.dirHandle.getFileHandle('response.json');
-          var f=await h.getFile(); var txt=await f.text();
-          await Bridge.dirHandle.removeEntry('response.json');
-          clearInterval(iv); clearTimeout(t);
-          resolve(JSON.parse(txt));
-        }catch(e){}
-      },400);
-    });
-  }
-};
 
 // ============================================================
 // MARKET DATA
@@ -692,7 +494,6 @@ function nav(view){
   if(view==='investments')Investments.renderAll();
   if(view==='goals')Goals.renderAll();
   if(view==='properties')Properties.renderAll();
-  if(view==='projects')Projects.renderAll();
   if(view==='settings')Settings.load();
 }
 function openModal(id){var e=document.getElementById(id);if(e)e.className='modal-bg open';}
@@ -700,132 +501,7 @@ function closeModal(id){var e=document.getElementById(id);if(e)e.className='moda
 document.addEventListener('click',function(e){if(e.target.classList.contains('modal-bg'))e.target.className='modal-bg';});
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 
-// ============================================================
-// ASSETS
-// ============================================================
-var Assets = {
-  refresh: async function(){
-    if(!Bridge.isReady()){alert('Primero configura el directorio bridge en Ajustes.');return;}
-    Debug.info('Assets.refresh()');
-    var btn=document.getElementById('assets-ts');
-    if(btn)btn.textContent='Cargando...';
-    try{
-      var cfg=Store.get(SK.config,{});
-      var data=await Bridge.request(cfg.epAssets||'/moneyBook/getAssetData',{});
-      Store.set(SK.cAssets,{data:data,ts:Date.now()});
-      this._render(data.value);
-      if(btn)btn.textContent='Sync: '+new Date().toLocaleTimeString('es-CL');
-    }catch(e){
-      Debug.err('Assets: '+e.message);
-      var cached=Store.get(SK.cAssets);
-      if(cached&&cached.data){this._render(cached.data);if(btn)btn.textContent='Caché: '+new Date(cached.ts).toLocaleDateString('es-CL');}
-      else if(btn)btn.textContent='Error: '+e.message;
-    }
-  },
-  _render: function(data){
-    if(!Array.isArray(data)){Debug.warn('Assets: unexpected format',data);return;}
-    var icons={'11':'💵','1':'🏠','4':'🏛','8':'📈','5':'🤝','10':'🏡','15':'🎁'};
-    var colors={'11':'var(--green)','1':'var(--cyan)','4':'var(--purple)','8':'var(--amber)','10':'var(--green)'};
-    var el=document.getElementById('assets-groups'); if(!el)return;
-    el.innerHTML=data.map(function(g){
-      var total=parseFloat(g.assetMoney||0);
-      var icon=icons[g.assetGroupId]||'📋';
-      var color=colors[g.assetGroupId]||'var(--muted)';
-      return'<div class="card-sm"><div style="font-size:12px;font-weight:700;color:'+color+';text-transform:uppercase;margin-bottom:8px">'+icon+' '+g.assetName+'</div>'+
-        '<div style="font-size:19px;font-weight:700;font-family:var(--mono);color:'+color+';margin-bottom:8px">'+Fmt.short(total)+'</div>'+
-        (g.children||[]).map(function(c){var v=parseFloat(c.assetMoney||0);return'<div style="display:flex;justify-content:space-between;font-size:11px;font-family:var(--mono)"><span style="color:var(--muted)">'+c.assetName+'</span><span>'+Fmt.short(v)+'</span></div>';}).join('')+'</div>';
-    }).join('');
-    var rows=[];
-    data.forEach(function(g){(g.children||[]).forEach(function(c){rows.push({group:g.assetName,name:c.assetName,value:parseFloat(c.assetMoney||0)});});});
-    rows.sort(function(a,b){return b.value-a.value;});
-    var t=document.getElementById('assets-table'); if(t)t.innerHTML='<table><thead><tr><th>Grupo</th><th>Activo</th><th>Valor</th></tr></thead><tbody>'+rows.map(function(r){return'<tr><td><span class="badge bb">'+r.group+'</span></td><td>'+r.name+'</td><td>'+Fmt.clp(r.value)+'</td></tr>';}).join('')+'</tbody></table>';
-    Dashboard.updateFromAssets(data);
-  }
-};
 
-// ============================================================
-// EXPENSES
-// ============================================================
-var Expenses = {
-  _raw:[], _filtered:[],
-  fetch: async function(){
-    if(!Bridge.isReady()){alert('Primero configura el directorio bridge en Ajustes.');return;}
-    var start=document.getElementById('exp-start').value;
-    var end=document.getElementById('exp-end').value;
-    if(!start||!end){alert('Selecciona rango de fechas');return;}
-    var btn=document.getElementById('exp-fetch-btn');
-    if(btn){btn.textContent='Esperando bridge...';btn.disabled=true;}
-    Debug.req('Expenses: '+start+' → '+end);
-    try{
-      var cfg=Store.get(SK.config,{});
-      var data=await Bridge.request(cfg.endpoint||'/moneyBook/getSpendListData',{startDate:start,endDate:end});
-      this._raw=Array.isArray(data)?data:[];
-      var cache=Store.get(SK.cExpenses,{});
-      cache[start+'_'+end]={data:this._raw,ts:Date.now()};
-      Store.set(SK.cExpenses,cache);
-      Debug.res('Expenses: '+this._raw.length+' registros');
-      this.applyFilter();
-    }catch(e){
-      Debug.err('Expenses: '+e.message); alert('Error: '+e.message);
-    }
-    if(btn){btn.textContent='Cargar via Bridge';btn.disabled=false;}
-  },
-  loadCached: function(){
-    var cache=Store.get(SK.cExpenses,{});
-    var keys=Object.keys(cache);
-    if(!keys.length){alert('Sin caché');return;}
-    var start=document.getElementById('exp-start').value;
-    var end=document.getElementById('exp-end').value;
-    var key=(start&&end&&cache[start+'_'+end])?start+'_'+end:keys.sort().pop();
-    var e=cache[key];
-    this._raw=(e&&e.data)?e.data:[];
-    var p=key.split('_');
-    if(p[0])document.getElementById('exp-start').value=p[0];
-    if(p[1])document.getElementById('exp-end').value=p[1];
-    Debug.info('Expenses cache: '+key+' ('+this._raw.length+')');
-    this.applyFilter();
-  },
-  applyFilter: function(){
-    var cat=(document.getElementById('exp-filter').value||'').toLowerCase();
-    var type=document.getElementById('exp-type').value||'';
-    this._filtered=this._raw.filter(function(t){
-      var mc=!cat||(t.subCategory||'').toLowerCase().indexOf(cat)!==-1;
-      var mt=!type||(type==='out'?t.inOutType==='out':t.inOutType!=='out');
-      return mc&&mt;
-    });
-    this._render();
-  },
-  _render: function(){
-    var d=this._filtered; var income=0,spent=0;
-    d.forEach(function(t){var v=parseFloat(t.mbCash||0);if(t.inOutType==='out')spent+=v;else income+=v;});
-    var net=income-spent; var rate=income>0?net/income*100:0;
-    var si=function(id,v){var e=document.getElementById(id);if(e)e.textContent=v;};
-    si('ex-income',Fmt.clp(income)); si('ex-spent',Fmt.clp(spent));
-    si('ex-net',Fmt.clp(net)); si('ex-rate',rate.toFixed(1)+'%');
-    si('ex-count',d.length+' registros');
-    var netEl=document.getElementById('ex-net');
-    if(netEl)netEl.style.color=net>=0?'var(--green)':'var(--red)';
-    this._renderCharts(d); this._renderTable(d);
-  },
-  _renderCharts: function(data){
-    var bycat={};
-    data.filter(function(t){return t.inOutType==='out';}).forEach(function(t){var c=t.subCategory||'Sin cat';bycat[c]=(bycat[c]||0)+parseFloat(t.mbCash||0);});
-    var sorted=Object.entries(bycat).sort(function(a,b){return b[1]-a[1];}).slice(0,10);
-    if(!sorted.length)return;
-    var labels=sorted.map(function(x){var k=x[0];return k.length>14?k.slice(0,13)+'.':k;});
-    var vals=sorted.map(function(x){return x[1];});
-    var colors=Charts.C.slice(0,sorted.length);
-    Charts.create('ch-exp-pie','doughnut',labels,[{data:vals,backgroundColor:colors,borderColor:'#07080f',borderWidth:2}],{legendRight:true});
-    Charts.create('ch-exp-bar','bar',labels,[{label:'Gastos',data:vals,backgroundColor:colors}],{indexAxis:'y',noLegend:true});
-  },
-  _renderTable: function(data){
-    var s=data.slice().sort(function(a,b){return(b.date||'').localeCompare(a.date||'');});
-    var el=document.getElementById('ex-table'); if(!el)return;
-    el.innerHTML='<table><thead><tr><th>Fecha</th><th>Categoría</th><th>Tipo</th><th>Monto</th></tr></thead><tbody>'+
-      s.map(function(t){var out=t.inOutType==='out';return'<tr><td style="color:var(--muted)">'+(t.date||'--')+'</td><td>'+(t.subCategory||'--')+'</td><td><span class="badge '+(out?'br':'bg')+'">'+(out?'Gasto':'Ingreso')+'</span></td><td style="color:'+(out?'var(--red)':'var(--green)')+'">'+Fmt.clp(parseFloat(t.mbCash||0))+'</td></tr>';}).join('')+
-      '</tbody></table>';
-  }
-};
 
 // ============================================================
 // INVESTMENTS
@@ -1100,7 +776,7 @@ var Goals = {
   delete: function(id){if(!confirm('Eliminar?'))return;Store.set(SK.goals,this.getAll().filter(function(g){return g.id!==id;}));this.renderAll();},
   renderAll: function(){
     var goals=this.getAll(); var el=document.getElementById('goals-grid'); if(!el)return;
-    if(!goals.length){el.innerHTML='<div class="card" style="grid-column:1/-1;text-align:center;padding:32px"><p style="color:var(--muted)">Sin metas configuradas.</p></div>';Dashboard.renderGoals();return;}
+    if(!goals.length){el.innerHTML='<div class="card" style="grid-column:1/-1;text-align:center;padding:32px"><p style="color:var(--muted)">Sin metas configuradas.</p></div>';return;}
     var tc={months:'var(--green)',property:'var(--amber)',fixed:'var(--purple)'};
     el.innerHTML=goals.map(function(g){
       var target=g.target||1; var current=g.current||0; var pct=Math.min(current/target*100,100);
@@ -1115,9 +791,204 @@ var Goals = {
         (g.type==='months'&&g.monthlySpend?'<div style="font-size:11px;color:var(--muted)">Cubre '+(current/g.monthlySpend).toFixed(1)+' / '+g.months+' meses</div>':'')+
         '<div style="display:flex;gap:6px;margin-top:10px"><button class="btn btn-ghost" style="padding:3px 9px;font-size:11px" onclick="Goals.openModal(\''+g.id+'\')">Editar</button><button class="btn btn-red" style="padding:3px 9px;font-size:11px" onclick="Goals.delete(\''+g.id+'\')">×</button></div></div>';
     }).join('');
-    Dashboard.renderGoals();
   }
 };
+
+
+// ============================================================
+// SETTINGS
+// ============================================================
+var Settings = {
+  load: function(){
+    var cfg=Store.get(SK.config,{});
+    var sv=function(id,v){var e=document.getElementById(id);if(e)e.value=v||'';};
+    sv('cfg-salary',cfg.salary||'');
+    sv('cfg-needs',cfg.pctNeeds!=null?cfg.pctNeeds:50);
+    sv('cfg-wants',cfg.pctWants!=null?cfg.pctWants:10);
+    sv('cfg-commission',cfg.propCommission!=null?cfg.propCommission:10);
+    this.calcSavings();
+    var stats=document.getElementById('cfg-storage-stats');
+    if(stats)stats.textContent='Usado: '+Store.size()+' | Keys: '+Store.keys().length;
+  },
+  save: function(){
+    Store.set(SK.config,{
+      salary:parseFloat(document.getElementById('cfg-salary').value)||0,
+      pctNeeds:parseFloat(document.getElementById('cfg-needs').value)||50,
+      pctWants:parseFloat(document.getElementById('cfg-wants').value)||10,
+      propCommission:parseFloat(document.getElementById('cfg-commission').value)||10
+    });
+    Debug.info('Settings saved');
+    alert('Configuración guardada');
+  },
+  calcSavings: function(){
+    var n=parseFloat(document.getElementById('cfg-needs').value)||50;
+    var w=parseFloat(document.getElementById('cfg-wants').value)||10;
+    var el=document.getElementById('cfg-savings'); if(el)el.textContent=Math.max(0,100-n-w);
+  }
+};
+
+// ============================================================
+// EXCEL IMPORT
+// ============================================================
+var ExcelImport = {
+  _setResult: function(msg, color){
+    var el=document.getElementById('import-result');
+    if(el){el.textContent=msg; el.style.color=color||'var(--muted)';}
+  },
+  importSalud: async function(evt){
+    var file=evt.target.files[0]; if(!file)return;
+    this._setResult('Procesando '+file.name+'...','var(--amber)');
+    var untilEl=document.getElementById('import-until');
+    var importUntil=(untilEl&&untilEl.value)?untilEl.value:'2025-02';
+
+    try{
+      var buf=await file.arrayBuffer();
+      var wb=XLSX.read(buf,{type:'array'});
+      Debug.info('Excel loaded: '+wb.SheetNames.join(', '));
+
+      var monthMap={
+        'Enero':'2025-01','Febrero':'2025-02','Marzo':'2025-03','Abril':'2025-04',
+        'Mayo':'2025-05','Junio':'2025-06','Julio':'2025-07','Agosto':'2025-08',
+        'Septiembre':'2025-09','Octubre':'2025-10','Noviembre':'2025-11','Diciembre':'2025-12'
+      };
+      // Fund name → id mapping (matches app defaults)
+      var fundIds={
+        'Fintual':'fintual','FFMM Itau Dinamico':'itaudin',
+        'Quilter/Utmost':'quilter','Interactive Brokers':'ib',
+        'ML':'ml','Scotia':'scotia','Global66':'global66'
+      };
+      var fundNames=['Fintual','FFMM Itau Dinamico','Quilter/Utmost','Interactive Brokers','ML','Scotia','Global66'];
+
+      var allSnaps=[]; var budgetStats=Store.get(SK.budgetStats,{});
+      var snapCount=0, monthCount=0;
+
+      wb.SheetNames.forEach(function(sname){
+        var month=monthMap[sname];
+        if(!month||month>importUntil) return;
+        monthCount++;
+
+        var ws=wb.Sheets[sname];
+        var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true});
+
+        var gn=function(r,c){var v=rows[r]&&rows[r][c];return(v!==null&&v!==undefined&&!isNaN(parseFloat(v)))?parseFloat(v):0;};
+        var gs=function(r,c){var v=rows[r]&&rows[r][c];return v!=null?String(v).trim():'';};
+
+        var salary=gn(3,1); var usdRate=gn(0,1)||950;
+        var leftTotal=gn(8,2); var spentTotal=gn(9,2);
+        var addIncome=gn(10,2); var totalIncome=gn(11,2);
+        var leftToInvest=gn(11,5); var investedTotal=gn(12,5);
+
+        budgetStats[month]={salary:salary,leftTotal:leftTotal,spentTotal:spentTotal,
+          additionalIncome:addIncome,totalIncome:totalIncome,
+          leftToInvest:leftToInvest,investedTotal:investedTotal,usdRate:usdRate};
+
+        // Investment snapshots: rows 4-10, cols 8-14
+        [4,5,6,7,8,9,10].forEach(function(rowIdx,i){
+          var fname=fundNames[i];
+          var fid=fundIds[fname];
+          var prev=gn(rowIdx,9); var curr=gn(rowIdx,10);
+          var retPct=gn(rowIdx,11); var invested=gn(rowIdx,14);
+          if(curr===0&&prev===0) return;
+          allSnaps.push({
+            id:month+'_'+fid,
+            month:month,fundId:fid,fundName:fname,
+            currency:'CLP',// spreadsheet stores all in CLP
+            prevBalance:prev,currBalance:curr,
+            invested:invested,returnPct:retPct,usdRate:usdRate
+          });
+          snapCount++;
+        });
+
+      });
+
+      // Merge investment snapshots (skip if month+fund already exists manually)
+      var invData=Store.get(SK.invest,{funds:[],snapshots:[]});
+      if(!invData.funds||!invData.funds.length) invData.funds=Investments._defs();
+      var existingKeys={};
+      (invData.snapshots||[]).forEach(function(s){existingKeys[s.month+'_'+s.fundId]=true;});
+      allSnaps.forEach(function(s){
+        if(!existingKeys[s.month+'_'+s.fundId]){
+          invData.snapshots.push(s); existingKeys[s.month+'_'+s.fundId]=true;
+        } else {
+          // Update existing imported snapshots (overwrite)
+          invData.snapshots=invData.snapshots.filter(function(x){return!(x.month===s.month&&x.fundId===s.fundId&&x.id===s.id);});
+          invData.snapshots.push(s);
+        }
+      });
+
+      Store.set(SK.invest,invData);
+      Store.set(SK.budgetStats,budgetStats);
+
+      var msg='Importados '+snapCount+' snapshots en '+monthCount+' meses (hasta '+importUntil+')';
+      this._setResult(msg,'var(--green)');
+      Debug.res('Excel import Salud Financiera: '+msg);
+
+      // Auto-navigate to latest imported month in investments
+      var latest=Object.keys(budgetStats).sort().pop();
+      if(latest){var el=document.getElementById('inv-month');if(el)el.value=latest;}
+
+    }catch(e){
+      this._setResult('Error: '+e.message,'var(--red)');
+      Debug.err('Excel import: '+e.message);
+    }
+    evt.target.value='';
+  },
+
+  importPropiedades: async function(evt){
+    var file=evt.target.files[0]; if(!file)return;
+    this._setResult('Procesando '+file.name+'...','var(--amber)');
+    try{
+      var buf=await file.arrayBuffer();
+      var wb=XLSX.read(buf,{type:'array'});
+      var ws=wb.Sheets['Detalle propiedades'];
+      if(!ws){this._setResult('No se encontró la hoja "Detalle propiedades"','var(--red)');return;}
+
+      var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true});
+      var gn=function(r,c){var v=rows[r]&&rows[r][c];return(v!==null&&v!==undefined&&!isNaN(parseFloat(v)))?parseFloat(v):null;};
+      var gs=function(r,c){var v=rows[r]&&rows[r][c];return v!=null?String(v).trim():'';};
+
+      var props=[];
+      for(var r=1;r<=3;r++){
+        if(!rows[r]||!gs(r,0)) continue;
+        var name=gs(r,0);
+        var unit=gs(r,6);
+        var pid='prop'+(r);
+        if(name.indexOf('Punta')!==-1) pid='prop1';
+        else if(unit.indexOf('104')!==-1) pid='prop2';
+        else if(unit.indexOf('405')!==-1) pid='prop3';
+
+        var p={
+          id:pid,name:name,address:gs(r,1),commune:gs(r,2),unit:unit,
+          sqm:gn(r,5),layout:gs(r,4),parking:gs(r,7)||gs(r,8),
+          storage:gs(r,7)&&gs(r,8)?gs(r,8):gs(r,7),
+          ufPrice:gn(r,10),ufFee:gn(r,24),
+          totalInstallments:gn(r,17)?Math.round(gn(r,17)):null,
+          paidInstallments:gn(r,18)?Math.round(gn(r,18)):null,
+          annualRate:gn(r,21),creditType:gs(r,22),bank:gs(r,23),
+          notes:'Importado desde Excel'
+        };
+        var layout=p.layout||'';
+        var dm=layout.match(/(\d)D/); var bm=layout.match(/(\d)B/);
+        if(dm) p.bedrooms=parseInt(dm[1]);
+        if(bm) p.bathrooms=parseInt(bm[1]);
+        props.push(p);
+      }
+
+      if(props.length){
+        Store.set(SK.properties,props);
+        this._setResult('✓ Importadas '+props.length+' propiedades desde Excel','var(--green)');
+        Debug.res('Excel import Propiedades: '+props.length+' props');
+      } else {
+        this._setResult('No se encontraron propiedades en la hoja','var(--amber)');
+      }
+    }catch(e){
+      this._setResult('Error: '+e.message,'var(--red)');
+      Debug.err('Excel import propiedades: '+e.message);
+    }
+    evt.target.value='';
+  }
+};
+
 
 // ============================================================
 // PROPERTIES
@@ -1205,7 +1076,6 @@ var Properties = {
       data.map(function(d){var p=props.filter(function(x){return x.id===d.propertyId;})[0];return'<tr><td>'+(p?p.name:d.propertyId)+'</td><td>'+d.month+'</td><td>'+Fmt.clp(d.value)+'</td></tr>';}).join('')+'</tbody></table>':'<p style="font-size:12px;color:var(--muted)">Sin registros</p>';
   },
   deleteRent: function(id){if(!confirm('Eliminar?'))return;Store.set(SK.rents,this.getRents().filter(function(r){return r.id!==id;}));this.renderAll();},
-  // Calculate total mortgage debt in CLP
   calcTotalMortgageDebt: function(){
     var uf=MarketData.getUF(); var total=0;
     this.getAll().forEach(function(p){var rem=(p.totalInstallments||0)-(p.paidInstallments||0);total+=p.ufFee&&rem?p.ufFee*rem*uf:0;});
@@ -1263,472 +1133,11 @@ var Properties = {
 };
 
 // ============================================================
-// PROJECTS
-// ============================================================
-var Projects = {
-  getAll: function(){return Store.get(SK.projects,[]);},
-  openModal: function(id){
-    var p=id?this.getAll().filter(function(x){return x.id===id;})[0]:null;
-    document.getElementById('pj-id').value=id||'';
-    document.getElementById('pj-name').value=p?p.name:'';
-    document.getElementById('pj-desc').value=p?(p.desc||''):'';
-    document.getElementById('pj-goal').value=p?(p.goal||''):'';
-    document.getElementById('pj-current').value=p?(p.current||''):'';
-    document.getElementById('pj-monthly').value=p?(p.monthly||''):'';
-    openModal('m-project');
-  },
-  save: function(){
-    var id=document.getElementById('pj-id').value||uid();
-    var p={id:id,name:document.getElementById('pj-name').value,desc:document.getElementById('pj-desc').value,
-      goal:parseFloat(document.getElementById('pj-goal').value)||0,
-      current:parseFloat(document.getElementById('pj-current').value)||0,
-      monthly:parseFloat(document.getElementById('pj-monthly').value)||0};
-    var all=this.getAll().filter(function(x){return x.id!==id;}); all.push(p); Store.set(SK.projects,all);
-    closeModal('m-project'); this.renderAll();
-  },
-  delete: function(id){if(!confirm('Eliminar?'))return;Store.set(SK.projects,this.getAll().filter(function(p){return p.id!==id;}));this.renderAll();},
-  renderAll: function(){
-    var projects=this.getAll(); var el=document.getElementById('proj-grid'); if(!el)return;
-    if(!projects.length){el.innerHTML='<div class="card" style="grid-column:1/-1;text-align:center;padding:32px"><p style="color:var(--muted)">Sin proyectos</p></div>';return;}
-    el.innerHTML=projects.map(function(p){
-      var pct=p.goal?Math.min(p.current/p.goal*100,100):0;
-      var miss=Math.max((p.goal||0)-(p.current||0),0);
-      var months=p.monthly&&miss?Math.ceil(miss/p.monthly):null;
-      return'<div class="card" style="border-color:rgba(0,212,255,.2)"><div style="font-size:15px;font-weight:800;margin-bottom:4px">'+p.name+'</div>'+
-        '<div style="font-size:12px;color:var(--muted);margin-bottom:10px">'+(p.desc||'')+'</div>'+
-        '<div class="pw" style="margin-bottom:6px"><div class="pf" style="width:'+pct.toFixed(0)+'%;background:var(--cyan)"></div></div>'+
-        '<div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;margin-bottom:8px"><span style="color:var(--cyan)">'+Fmt.short(p.current)+'</span><span style="color:var(--muted)">'+pct.toFixed(0)+'%</span><span style="color:var(--muted)">'+Fmt.short(p.goal)+'</span></div>'+
-        (miss>0?'<div style="font-size:11px;color:var(--muted)">Faltante: '+Fmt.clp(miss)+'</div>':'<span class="badge bg">META OK</span>')+
-        (months?'<div style="font-size:11px;color:var(--muted)">~'+months+' meses</div>':'')+
-        '<div style="display:flex;gap:6px;margin-top:10px"><button class="btn btn-ghost" style="padding:3px 8px;font-size:11px" onclick="Projects.openModal(\''+p.id+'\')">Editar</button><button class="btn btn-red" style="padding:3px 8px;font-size:11px" onclick="Projects.delete(\''+p.id+'\')">×</button></div></div>';
-    }).join('');
-  }
-};
-
-// ============================================================
-// SETTINGS
-// ============================================================
-var Settings = {
-  load: function(){
-    var cfg=Store.get(SK.config,{});
-    var sv=function(id,v){var e=document.getElementById(id);if(e)e.value=v||'';};
-    sv('cfg-url',cfg.baseUrl||'http://192.168.1.93:8888');
-    sv('cfg-ep',cfg.endpoint||'/moneyBook/getSpendListData');
-    sv('cfg-ep-assets',cfg.epAssets||'/moneyBook/getAssetData');
-    sv('cfg-ep-dash',cfg.epDash||'/moneyBook/getDashBoardData');
-    sv('cfg-ep-cards',cfg.epCards||'/moneyBook/getCardData');
-    sv('cfg-salary',cfg.salary||'');
-    sv('cfg-needs',cfg.pctNeeds!=null?cfg.pctNeeds:50);
-    sv('cfg-wants',cfg.pctWants!=null?cfg.pctWants:10);
-    sv('cfg-commission',cfg.propCommission||10);
-    this.calcSavings();
-    var stats=document.getElementById('cfg-storage-stats');
-    if(stats)stats.textContent='Usado: '+Store.size()+' | Keys: '+Store.keys().length;
-    var el=document.getElementById('cfg-dir-label');
-    if(el)el.textContent=Bridge.isReady()?'Directorio configurado OK':'No configurado — click para seleccionar';
-  },
-  save: function(){
-    Store.set(SK.config,{
-      baseUrl:document.getElementById('cfg-url').value,
-      endpoint:document.getElementById('cfg-ep').value,
-      epAssets:document.getElementById('cfg-ep-assets').value,
-      epDash:document.getElementById('cfg-ep-dash').value,
-      epCards:document.getElementById('cfg-ep-cards').value,
-      salary:parseFloat(document.getElementById('cfg-salary').value)||0,
-      pctNeeds:parseFloat(document.getElementById('cfg-needs').value)||50,
-      pctWants:parseFloat(document.getElementById('cfg-wants').value)||10,
-      propCommission:parseFloat(document.getElementById('cfg-commission').value)||10
-    });
-    Debug.info('Settings saved');
-    alert('Configuración guardada'); Dashboard.render();
-  },
-  calcSavings: function(){
-    var n=parseFloat(document.getElementById('cfg-needs').value)||50;
-    var w=parseFloat(document.getElementById('cfg-wants').value)||10;
-    var el=document.getElementById('cfg-savings'); if(el)el.textContent=Math.max(0,100-n-w);
-  },
-  selectDir: async function(){
-    try{
-      Bridge.dirHandle=await window.showDirectoryPicker({id:'sfv1-bridge',mode:'readwrite'});
-      Bridge._setStatus(true);
-      var el=document.getElementById('cfg-dir-label'); if(el)el.textContent='Directorio configurado OK';
-      var banner=document.getElementById('bridge-banner'); if(banner)banner.style.display='none';
-      Debug.res('Bridge directory configured');
-    }catch(e){
-      if(e.name!=='AbortError'){Debug.err('selectDir: '+e.message);alert('Error: '+e.message);}
-    }
-  },
-  testBridge: async function(type){
-    var el=document.getElementById('cfg-test-result');
-    el.textContent='Probando...'; el.style.color='var(--muted)';
-    try{
-      var cfg=Store.get(SK.config,{});
-      var ep=type==='dash'?(cfg.epDash||'/moneyBook/getDashBoardData'):(cfg.epAssets||'/moneyBook/getAssetData');
-      var data=await Bridge.request(ep,{});
-      el.textContent='OK ('+type+'): '+JSON.stringify(data).slice(0,120)+'...';
-      el.style.color='var(--green)';
-    }catch(e){
-      el.textContent='Error: '+e.message; el.style.color='var(--red)';
-    }
-  }
-};
-
-// ============================================================
-// EXCEL IMPORT
-// ============================================================
-var ExcelImport = {
-  _setResult: function(msg, color){
-    var el=document.getElementById('import-result');
-    if(el){el.textContent=msg; el.style.color=color||'var(--muted)';}
-  },
-  importSalud: async function(evt){
-    var file=evt.target.files[0]; if(!file)return;
-    this._setResult('Procesando '+file.name+'...','var(--amber)');
-    var untilEl=document.getElementById('import-until');
-    var importUntil=(untilEl&&untilEl.value)?untilEl.value:'2025-02';
-
-    try{
-      var buf=await file.arrayBuffer();
-      var wb=XLSX.read(buf,{type:'array'});
-      Debug.info('Excel loaded: '+wb.SheetNames.join(', '));
-
-      var monthMap={
-        'Enero':'2025-01','Febrero':'2025-02','Marzo':'2025-03','Abril':'2025-04',
-        'Mayo':'2025-05','Junio':'2025-06','Julio':'2025-07','Agosto':'2025-08',
-        'Septiembre':'2025-09','Octubre':'2025-10','Noviembre':'2025-11','Diciembre':'2025-12'
-      };
-      // Fund name → id mapping (matches app defaults)
-      var fundIds={
-        'Fintual':'fintual','FFMM Itau Dinamico':'itaudin',
-        'Quilter/Utmost':'quilter','Interactive Brokers':'ib',
-        'ML':'ml','Scotia':'scotia','Global66':'global66'
-      };
-      var fundNames=['Fintual','FFMM Itau Dinamico','Quilter/Utmost','Interactive Brokers','ML','Scotia','Global66'];
-
-      var allSnaps=[]; var budgetStats=Store.get(SK.budgetStats,{}); var expCache=Store.get(SK.cExpenses,{});
-      var snapCount=0, monthCount=0;
-
-      wb.SheetNames.forEach(function(sname){
-        var month=monthMap[sname];
-        if(!month||month>importUntil) return;
-        monthCount++;
-
-        var ws=wb.Sheets[sname];
-        var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true});
-
-        var gn=function(r,c){var v=rows[r]&&rows[r][c];return(v!==null&&v!==undefined&&!isNaN(parseFloat(v)))?parseFloat(v):0;};
-        var gs=function(r,c){var v=rows[r]&&rows[r][c];return v!=null?String(v).trim():'';};
-
-        var salary=gn(3,1); var usdRate=gn(0,1)||950;
-        var leftTotal=gn(8,2); var spentTotal=gn(9,2);
-        var addIncome=gn(10,2); var totalIncome=gn(11,2);
-        var leftToInvest=gn(11,5); var investedTotal=gn(12,5);
-
-        budgetStats[month]={salary:salary,leftTotal:leftTotal,spentTotal:spentTotal,
-          additionalIncome:addIncome,totalIncome:totalIncome,
-          leftToInvest:leftToInvest,investedTotal:investedTotal,usdRate:usdRate};
-
-        // Investment snapshots: rows 4-10, cols 8-14
-        [4,5,6,7,8,9,10].forEach(function(rowIdx,i){
-          var fname=fundNames[i];
-          var fid=fundIds[fname];
-          var prev=gn(rowIdx,9); var curr=gn(rowIdx,10);
-          var retPct=gn(rowIdx,11); var invested=gn(rowIdx,14);
-          if(curr===0&&prev===0) return;
-          allSnaps.push({
-            id:month+'_'+fid,
-            month:month,fundId:fid,fundName:fname,
-            currency:'CLP',// spreadsheet stores all in CLP
-            prevBalance:prev,currBalance:curr,
-            invested:invested,returnPct:retPct,usdRate:usdRate
-          });
-          snapCount++;
-        });
-
-        // Expense data from needs (rows 14-27) and wants (rows 30-43)
-        var expenses=[];
-        // Needs: concept=col0, value=col1
-        for(var r=14;r<=27;r++){
-          var label=gs(r,0); var val=gn(r,1);
-          if(!label||label==='Concept'||label==='Left for Needs'||label==='Spent total') continue;
-          if(val>0) expenses.push({subCategory:label,inOutType:'out',mbCash:val,date:month+'-15',group:'needs'});
-        }
-        // Wants: rows 31-43
-        for(var r2=31;r2<=43;r2++){
-          var label2=gs(r2,0); var val2=gn(r2,1);
-          if(!label2||label2==='Concept'||label2==='Left for Wants'||label2==='Spent total') continue;
-          if(val2>0) expenses.push({subCategory:label2,inOutType:'out',mbCash:val2,date:month+'-20',group:'wants'});
-        }
-        // Income
-        if(salary>0) expenses.push({subCategory:'Sueldo',inOutType:'in',mbCash:salary,date:month+'-05'});
-        if(addIncome>0) expenses.push({subCategory:'Ingreso adicional',inOutType:'in',mbCash:addIncome,date:month+'-10'});
-
-        var firstDay=month+'-01'; var lastDay=month+'-31';
-        expCache[firstDay+'_'+lastDay]={data:expenses,ts:Date.now(),importedFromExcel:true};
-      });
-
-      // Merge investment snapshots (skip if month+fund already exists manually)
-      var invData=Store.get(SK.invest,{funds:[],snapshots:[]});
-      if(!invData.funds||!invData.funds.length) invData.funds=Investments._defs();
-      var existingKeys={};
-      (invData.snapshots||[]).forEach(function(s){existingKeys[s.month+'_'+s.fundId]=true;});
-      allSnaps.forEach(function(s){
-        if(!existingKeys[s.month+'_'+s.fundId]){
-          invData.snapshots.push(s); existingKeys[s.month+'_'+s.fundId]=true;
-        } else {
-          // Update existing imported snapshots (overwrite)
-          invData.snapshots=invData.snapshots.filter(function(x){return!(x.month===s.month&&x.fundId===s.fundId&&x.id===s.id);});
-          invData.snapshots.push(s);
-        }
-      });
-
-      Store.set(SK.invest,invData);
-      Store.set(SK.budgetStats,budgetStats);
-      Store.set(SK.cExpenses,expCache);
-
-      var msg='✓ Importados '+snapCount+' snapshots en '+monthCount+' meses (hasta '+importUntil+')';
-      this._setResult(msg,'var(--green)');
-      Debug.res('Excel import Salud Financiera: '+msg);
-
-      // Auto-navigate to latest imported month in investments
-      var latest=Object.keys(budgetStats).sort().pop();
-      if(latest){var el=document.getElementById('inv-month');if(el)el.value=latest;}
-
-      // Refresh dashboard
-      Dashboard.renderBudget(); Dashboard.updateCashFlow();
-
-    }catch(e){
-      this._setResult('Error: '+e.message,'var(--red)');
-      Debug.err('Excel import: '+e.message);
-    }
-    evt.target.value=''; // reset file input
-  },
-
-  importPropiedades: async function(evt){
-    var file=evt.target.files[0]; if(!file)return;
-    this._setResult('Procesando '+file.name+'...','var(--amber)');
-    try{
-      var buf=await file.arrayBuffer();
-      var wb=XLSX.read(buf,{type:'array'});
-      var ws=wb.Sheets['Detalle propiedades'];
-      if(!ws){this._setResult('No se encontró la hoja "Detalle propiedades"','var(--red)');return;}
-
-      var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true});
-      var gn=function(r,c){var v=rows[r]&&rows[r][c];return(v!==null&&v!==undefined&&!isNaN(parseFloat(v)))?parseFloat(v):null;};
-      var gs=function(r,c){var v=rows[r]&&rows[r][c];return v!=null?String(v).trim():'';};
-
-      var props=[]; var propMap={
-        'Punta Arenas':'prop1','Llanquihue':'prop2'
-      };
-      var propIds=['prop1','prop2','prop3'];
-
-      // Data rows: 1,2,3 (0-indexed)
-      for(var r=1;r<=3;r++){
-        if(!rows[r]||!gs(r,0)) continue;
-        var name=gs(r,0);
-        // Determine id: if Punta Arenas → prop1, Llanquihue #104 → prop2, Llanquihue #405 → prop3
-        var unit=gs(r,6); // Departamento column
-        var pid='prop'+(r);
-        if(name.indexOf('Punta')!==-1) pid='prop1';
-        else if(unit.indexOf('104')!==-1) pid='prop2';
-        else if(unit.indexOf('405')!==-1) pid='prop3';
-
-        var p={
-          id:pid,
-          name:name,
-          address:gs(r,1),
-          commune:gs(r,2),
-          unit:unit,
-          sqm:gn(r,5),
-          layout:gs(r,4),
-          parking:gs(r,7)||gs(r,8),
-          storage:gs(r,7)&&gs(r,8)?gs(r,8):gs(r,7),
-          ufPrice:gn(r,10),
-          ufFee:gn(r,24),
-          totalInstallments:gn(r,17)?Math.round(gn(r,17)):null,
-          paidInstallments:gn(r,18)?Math.round(gn(r,18)):null,
-          annualRate:gn(r,21),
-          creditType:gs(r,22),
-          bank:gs(r,23),
-          notes:'Importado desde Excel'
-        };
-
-        // Best-effort bedrooms/bathrooms from layout
-        var layout=p.layout||'';
-        var dm=layout.match(/(\d)D/); var bm=layout.match(/(\d)B/);
-        if(dm) p.bedrooms=parseInt(dm[1]);
-        if(bm) p.bathrooms=parseInt(bm[1]);
-
-        props.push(p);
-      }
-
-      if(props.length){
-        Store.set(SK.properties,props);
-        this._setResult('✓ Importadas '+props.length+' propiedades desde Excel','var(--green)');
-        Debug.res('Excel import Propiedades: '+props.length+' props');
-      } else {
-        this._setResult('No se encontraron propiedades en la hoja','var(--amber)');
-      }
-    }catch(e){
-      this._setResult('Error: '+e.message,'var(--red)');
-      Debug.err('Excel import propiedades: '+e.message);
-    }
-    evt.target.value='';
-  }
-};
-
-// ============================================================
-// DASHBOARD
-// ============================================================
-var Dashboard = {
-  render: async function(){
-    this.renderBudget(); this.renderGoals(); this.updateCashFlow();
-    var ca=Store.get(SK.cAssets); var cc=Store.get(SK.cCards); var cd=Store.get(SK.cDash);
-    if(ca&&ca.data)this.updateFromAssets(ca.data);
-    if(cc&&cc.data)this.renderCards(cc.data);
-    if(cd&&cd.data&&cd.data.assetLine)this._renderLine(cd.data.assetLine);
-    if(!Bridge.isReady())return;
-    try{
-      var cfg=Store.get(SK.config,{});
-      var dash=await Bridge.request(cfg.epDash||'/moneyBook/getDashBoardData',{});
-      Store.set(SK.cDash,{data:dash,ts:Date.now()});
-      if(dash.assetLine)this._renderLine(dash.assetLine);
-      if(dash.assetSummary){var e=document.getElementById('dk-patrimonio');if(e)e.textContent=Fmt.short(parseFloat(dash.assetSummary.totalAsset||0));}
-    }catch(e){Debug.warn('Dashboard: '+e.message);}
-    try{
-      var cfg2=Store.get(SK.config,{});
-      var cards=await Bridge.request(cfg2.epCards||'/moneyBook/getCardData',{});
-      Store.set(SK.cCards,{data:cards,ts:Date.now()});
-      this.renderCards(cards);
-    }catch(e){Debug.warn('Cards: '+e.message);}
-  },
-  updateFromAssets: function(data){
-    if(!Array.isArray(data))return;
-    var liquid=0,invest=0,total=0;
-    data.forEach(function(g){var v=parseFloat(g.assetMoney||0);total+=v;if(g.assetGroupId==='1'||g.assetGroupId==='11')liquid+=v;if(g.assetGroupId==='8')invest+=v;});
-    var si=function(id,v){var e=document.getElementById(id);if(e)e.textContent=v;};
-    si('dk-patrimonio',Fmt.short(total)); si('dk-liquid',Fmt.short(liquid)); si('dk-invest',Fmt.short(invest));
-    // Compute debt ratio
-    var mortgageDebt=Properties.calcTotalMortgageDebt();
-    var cardDebtEl=document.getElementById('dk-debt');
-    var cardDebt=cardDebtEl&&cardDebtEl.textContent!=='--'?0:0;// will be updated by renderCards
-    this._updateDebtRatio(mortgageDebt,total);
-    var groups=data.map(function(g){return{name:g.assetName,value:parseFloat(g.assetMoney||0)};});
-    Charts.create('ch-donut','doughnut',groups.map(function(g){return g.name;}),[{data:groups.map(function(g){return g.value;}),backgroundColor:Charts.C,borderColor:'#07080f',borderWidth:2}],{legendRight:true});
-  },
-  _updateDebtRatio: function(mortgageDebt, totalAssets){
-    var el=document.getElementById('dk-debtRatio');
-    var note=document.getElementById('dk-debtRatioNote');
-    if(!el) return;
-    if(!totalAssets){el.textContent='--';return;}
-    var ratio=mortgageDebt/totalAssets*100;
-    var c=ratio<40?'var(--green)':ratio<60?'var(--amber)':'var(--red)';
-    el.textContent=ratio.toFixed(1)+'%';
-    el.style.color=c;
-    if(note){
-      var txt=ratio<40?'Saludable (<40%)':ratio<60?'Moderado (40-60%)':'Alto (>60%)';
-      note.textContent=txt; note.style.color=c;
-    }
-  },
-  updateCashFlow: function(){
-    // Try to get current month cash flow from budget stats or expense cache
-    var now=new Date().toISOString().slice(0,7);
-    var budgetStats=Store.get(SK.budgetStats,{});
-    // Find latest available month
-    var months=Object.keys(budgetStats).sort();
-    var latest=months.pop();
-    var stats=latest?budgetStats[latest]:null;
-
-    var cfEl=document.getElementById('dk-cashflow');
-    var incEl=document.getElementById('dk-income');
-    var spEl=document.getElementById('dk-spent');
-    var srEl=document.getElementById('dk-savingRate');
-    var noteEl=document.getElementById('dk-cashflowNote');
-    var tsEl=document.getElementById('dash-ts');
-
-    if(stats){
-      var net=stats.leftTotal||0;
-      var income=stats.totalIncome||0;
-      var spent=stats.spentTotal||0;
-      var rate=income>0?(income-spent)/income*100:0;
-      var c=net>=0?'var(--green)':'var(--red)';
-      if(cfEl){cfEl.textContent=Fmt.clp(net);cfEl.style.color=c;}
-      if(incEl)incEl.textContent=Fmt.clp(income);
-      if(spEl)spEl.textContent=Fmt.clp(spent);
-      if(srEl){srEl.textContent=rate.toFixed(1)+'%';srEl.style.color=rate>=30?'var(--green)':rate>=15?'var(--amber)':'var(--red)';}
-      if(noteEl){noteEl.textContent='Datos de '+latest;noteEl.style.color='var(--muted)';}
-      if(tsEl)tsEl.textContent='Último mes con datos: '+latest+' — importado desde Excel';
-    } else {
-      if(cfEl)cfEl.textContent='--';
-      if(incEl)incEl.textContent='--';
-      if(spEl)spEl.textContent='--';
-      if(srEl)srEl.textContent='--';
-      if(noteEl){noteEl.textContent='Sin datos — importa Excel o conecta bridge';noteEl.style.color='var(--muted)';}
-    }
-  },
-  _renderLine: function(line){
-    if(!Array.isArray(line))return;
-    Charts.create('ch-patrimonio','line',line.map(function(l){return l.month||l.date||'';}),[{label:'Patrimonio',data:line.map(function(l){return parseFloat(l.total||l.value||0);}),borderColor:'var(--cyan)',backgroundColor:'rgba(0,212,255,0.05)',fill:true,tension:0.4,pointRadius:3,borderWidth:2,pointBackgroundColor:'var(--cyan)'}],{noLegend:true});
-  },
-  // Render patrimonio chart from investment snapshots if no bridge data
-  _renderLineFromSnaps: function(){
-    var snaps=Investments.getSnaps(); if(!snaps.length) return;
-    var usd=MarketData.getUSD(); var months=[];
-    snaps.forEach(function(s){if(months.indexOf(s.month)===-1)months.push(s.month);});
-    months.sort();
-    var vals=months.map(function(m){
-      var t=0; snaps.filter(function(s){return s.month===m;}).forEach(function(s){t+=s.currency==='USD'?s.currBalance*usd:s.currBalance;});
-      return t;
-    });
-    if(vals.some(function(v){return v>0;})){
-      Charts.create('ch-patrimonio','line',months,[{label:'Portfolio',data:vals,borderColor:'var(--cyan)',backgroundColor:'rgba(0,212,255,0.05)',fill:true,tension:0.4,pointRadius:3,borderWidth:2,pointBackgroundColor:'var(--cyan)'}],{noLegend:true});
-    }
-  },
-  renderBudget: function(){
-    var cfg=Store.get(SK.config,{}); var salary=parseFloat(cfg.salary)||0;
-    var el=document.getElementById('dk-budget'); if(!el)return;
-    // Try to use actual data from latest budget stats
-    var budgetStats=Store.get(SK.budgetStats,{});
-    var months=Object.keys(budgetStats).sort(); var latest=months.pop(); var stats=latest?budgetStats[latest]:null;
-    var effectiveSalary=stats?stats.salary:salary;
-    if(!effectiveSalary){el.innerHTML='<p style="font-size:12px;color:var(--muted)">Configure salario en Ajustes o importe Excel</p>';return;}
-    var pn=parseFloat(cfg.pctNeeds)||50; var pw2=parseFloat(cfg.pctWants)||10; var ps=100-pn-pw2;
-    var items=[{label:'Necesidades',pct:pn,val:effectiveSalary*pn/100,color:'var(--cyan)'},{label:'Deseos',pct:pw2,val:effectiveSalary*pw2/100,color:'var(--amber)'},{label:'Ahorro',pct:ps,val:effectiveSalary*ps/100,color:'var(--green)'}];
-    el.innerHTML='<div style="font-family:var(--mono)"><div style="font-size:11px;color:var(--muted);margin-bottom:8px">Ingreso: '+Fmt.clp(effectiveSalary)+(latest?' ('+latest+')':'')+'</div>'+
-      items.map(function(b){return'<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px"><span style="color:var(--muted)">'+b.label+'</span><span style="color:'+b.color+'">'+b.pct+'% — '+Fmt.short(b.val)+'</span></div><div class="pw"><div class="pf" style="width:'+b.pct+'%;background:'+b.color+'"></div></div></div>';}).join('')+
-      '</div>';
-  },
-  renderGoals: function(){
-    var goals=Goals.getAll(); var el=document.getElementById('dk-goals'); if(!el)return;
-    if(!goals.length){el.innerHTML='<p style="font-size:12px;color:var(--muted)">Sin fondos configurados</p>';return;}
-    el.innerHTML=goals.slice(0,3).map(function(g){
-      var pct=g.target?Math.min((g.current||0)/g.target*100,100):0;
-      var c=pct>=100?'var(--green)':pct>=50?'var(--amber)':'var(--red)';
-      return'<div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>'+g.name+'</span><span style="color:'+c+'">'+pct.toFixed(0)+'%</span></div><div class="pw"><div class="pf" style="width:'+pct.toFixed(0)+'%;background:'+c+'"></div></div><div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:2px">'+Fmt.short(g.current)+' / '+Fmt.short(g.target)+'</div></div>';
-    }).join('');
-  },
-  renderCards: function(cards){
-    var el=document.getElementById('dk-cards'); var debtEl=document.getElementById('dk-debt');
-    if(!el)return;
-    if(!cards||!Array.isArray(cards)||!cards.length){el.innerHTML='<p style="font-size:12px;color:var(--muted)">Sin datos</p>';return;}
-    var items=[],totalDebt=0;
-    cards.forEach(function(grp){(grp.children||[]).forEach(function(c){var v=parseFloat(c.notPayMoney||0);totalDebt+=v;items.push({name:c.assetName,debt:v});});});
-    if(debtEl)debtEl.textContent=Fmt.short(totalDebt);
-    // Update debt ratio with card debt
-    var ca=Store.get(SK.cAssets); var totalAssets=0;
-    if(ca&&ca.data){ca.data.forEach(function(g){totalAssets+=parseFloat(g.assetMoney||0);});}
-    var mortgageDebt=Properties.calcTotalMortgageDebt();
-    Dashboard._updateDebtRatio(mortgageDebt+totalDebt,totalAssets);
-    el.innerHTML=items.map(function(c){var nm=c.name.length>24?c.name.slice(0,23)+'.':c.name;return'<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:11px;font-family:var(--mono)"><span style="color:var(--muted)">'+nm+'</span><span style="color:var(--red)">'+Fmt.short(c.debt)+'</span></div>';}).join('');
-  }
-};
-
-// ============================================================
 // DATA I/O
 // ============================================================
 var DataIO = {
   exportAll: function(){
-    var data={_meta:{version:'1.1',ts:new Date().toISOString(),app:'SaludFinanciera'}};
+    var data={_meta:{version:'1.2',ts:new Date().toISOString(),app:'SaludFinanciera'}};
     Store.keys().forEach(function(k){data[k]=Store.get(k);});
     var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
@@ -1758,47 +1167,24 @@ var DataIO = {
 // ============================================================
 var App = {
   init: function(){
-    Debug.info('App.init() v1.1');
+    Debug.info('App.init() v1.2');
     var today=new Date();
-    var first=new Date(today.getFullYear(),today.getMonth(),1);
-    var si=function(id,v){var e=document.getElementById(id);if(e)e.value=v;};
-    si('exp-start',first.toISOString().slice(0,10));
-    si('exp-end',today.toISOString().slice(0,10));
 
     // Default investments month to latest with data
     var latestMonth=Investments._latestMonth();
-    si('inv-month',latestMonth||today.toISOString().slice(0,7));
+    var inv=document.getElementById('inv-month');
+    if(inv)inv.value=latestMonth||today.toISOString().slice(0,7);
 
     // Load market from cache
     var mkt=Store.get(SK.cMarket,{});
     if(mkt.usd){MarketData.usd=mkt.usd;MarketData.uf=mkt.uf;MarketData.btc=mkt.btc;MarketData._render();}
 
-    // Show banner if bridge not configured
-    var banner=document.getElementById('bridge-banner');
-    if(!Bridge.isReady()&&banner)banner.style.display='flex';
-
-    // Render from cache
-    Dashboard.renderBudget(); Dashboard.renderGoals(); Dashboard.updateCashFlow();
-    var ca=Store.get(SK.cAssets);
-    if(ca&&ca.data){Dashboard.updateFromAssets(ca.data);}else{Dashboard._renderLineFromSnaps();}
-    var cc=Store.get(SK.cCards);
-    if(cc&&cc.data)Dashboard.renderCards(cc.data);
+    // Render investments (default active view)
+    Investments.renderAll();
 
     // Async: market data
     MarketData.fetch();
-    Debug.info('App.init() done — '+(Bridge.isReady()?'bridge listo':'sin bridge (usando caché + Excel)'));
-  },
-  syncAll: async function(){
-    if(!Bridge.isReady()){alert('Configura el directorio bridge primero.');return;}
-    Debug.info('App.syncAll()');
-    var cfg=Store.get(SK.config,{});
-    try{
-      var assets=await Bridge.request(cfg.epAssets||'/moneyBook/getAssetData',{});
-      Store.set(SK.cAssets,{data:assets,ts:Date.now()});
-      Assets._render(assets); Dashboard.updateFromAssets(assets);
-    }catch(e){Debug.err('Sync assets: '+e.message);}
-    await Dashboard.render();
-    Debug.res('Sync complete');
+    Debug.info('App.init() done');
   }
 };
 
