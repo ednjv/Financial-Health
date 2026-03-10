@@ -29,6 +29,7 @@
 <div id="ticker">
   <div style="font-size:10px;font-weight:800;color:var(--cyan);letter-spacing:.1em" data-i18n="ticker.label">MERCADO</div>
   <div class="tk-item"><span class="tk-label">USD/CLP</span><span class="tk-val" id="t-usd">--</span></div>
+  <div class="tk-item"><span class="tk-label">EUR/CLP</span><span class="tk-val" id="t-eur">--</span></div>
   <div class="tk-item"><span class="tk-label">UF</span><span class="tk-val" id="t-uf">--</span></div>
   <div class="tk-item"><span class="tk-label">BTC</span><span class="tk-val" id="t-btc">--</span></div>
   <div style="margin-left:auto;display:flex;gap:6px;align-items:center">
@@ -48,6 +49,7 @@
   <div class="ssub" data-i18n="investments.subtitle">Snapshots mensuales — rendimiento y sugerencias de asignación</div>
   <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:flex-end">
     <button class="btn btn-cyan" onclick="Investments.openSnapModal(null)" data-i18n="investments.addSnapshot">+ Snapshot</button>
+    <button class="btn btn-ghost" onclick="Investments.openFundModal()" data-i18n="investments.manageFunds">Fondos</button>
     <div style="margin-left:auto;display:flex;align-items:flex-end;gap:6px">
       <button class="btn btn-ghost" style="padding:7px 10px" onclick="Investments.prevMonth()">◀</button>
       <div><label class="fl" data-i18n="investments.monthLabel">Mes</label><input type="month" id="inv-month" class="inp" style="width:155px" onchange="Investments.renderAll()"></div>
@@ -150,6 +152,21 @@
 </div>
 
 <!-- MODALS -->
+<div class="modal-bg" id="m-funds"><div class="modal">
+  <div class="mtitle" data-i18n="investments.modal.titleFunds">Gestionar Fondos</div>
+  <div id="funds-list" style="margin-bottom:14px;max-height:260px;overflow-y:auto"></div>
+  <div class="divider"></div>
+  <div class="fr">
+    <div class="fg"><label class="fl" data-i18n="investments.modal.labelFundName">Nombre</label><input type="text" id="fn-name" class="inp" placeholder="Ej: Mi Fondo"></div>
+    <div class="fg"><label class="fl" data-i18n="investments.modal.labelFundCurrency">Moneda</label><select id="fn-currency" class="inp"><option value="CLP">CLP — Chilean Peso</option><option value="USD">USD — US Dollar</option><option value="EUR">EUR — Euro</option><option value="JPY">JPY — Japanese Yen</option><option value="GBP">GBP — British Pound</option><option value="AUD">AUD — Australian Dollar</option><option value="CAD">CAD — Canadian Dollar</option><option value="CHF">CHF — Swiss Franc</option><option value="CNY">CNY — Chinese Yuan</option><option value="BRL">BRL — Brazilian Real</option></select></div>
+  </div>
+  <div class="fg"><label class="fl" data-i18n="investments.modal.labelFundDesc">Descripción</label><input type="text" id="fn-desc" class="inp" placeholder="Ej: Broker internacional"></div>
+  <div style="display:flex;gap:8px;margin-top:4px">
+    <button class="btn btn-cyan" onclick="Investments.saveFund()" data-i18n="investments.modal.saveFund">Agregar Fondo</button>
+    <button class="btn btn-ghost" onclick="closeModal('m-funds')" data-i18n="investments.modal.cancel">Cancelar</button>
+  </div>
+</div></div>
+
 <div class="modal-bg" id="m-snapshot"><div class="modal">
   <div class="mtitle" id="snap-modal-title">Registrar Snapshot de Inversión</div>
   <input type="hidden" id="sn-id">
@@ -160,7 +177,7 @@
     <div class="fg"><label class="fl" data-i18n="investments.modal.labelCurrBalance">Balance Actual</label><input type="number" id="sn-curr" class="inp" placeholder="0" oninput="Investments.calcRet()"></div>
   </div>
   <div class="fr">
-    <div class="fg"><label class="fl" data-i18n="investments.modal.labelCurrency">Moneda</label><select id="sn-currency" class="inp"><option value="CLP">CLP</option><option value="USD">USD</option></select></div>
+    <div class="fg"><label class="fl" data-i18n="investments.modal.labelCurrency">Moneda</label><select id="sn-currency" class="inp"><option value="CLP">CLP — Chilean Peso</option><option value="USD">USD — US Dollar</option><option value="EUR">EUR — Euro</option><option value="JPY">JPY — Japanese Yen</option><option value="GBP">GBP — British Pound</option><option value="AUD">AUD — Australian Dollar</option><option value="CAD">CAD — Canadian Dollar</option><option value="CHF">CHF — Swiss Franc</option><option value="CNY">CNY — Chinese Yuan</option><option value="BRL">BRL — Brazilian Real</option></select></div>
     <div class="fg"><label class="fl" data-i18n="investments.modal.labelInvested">Invertido este mes (CLP)</label><input type="number" id="sn-invested" class="inp" placeholder="0"></div>
   </div>
   <div class="card-sm" style="margin-bottom:14px" id="sn-preview"><div style="font-size:12px;color:var(--muted)" data-i18n="investments.modal.previewEmpty">Ingresa balances para ver rendimiento</div></div>

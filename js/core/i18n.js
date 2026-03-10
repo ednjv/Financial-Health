@@ -1,5 +1,21 @@
 'use strict';
 // ============================================================
+// CURRENCIES — Top 10 most used currencies (single source of truth)
+// ============================================================
+var CURRENCIES = [
+  { code: 'CLP', name: 'Chilean Peso',       symbol: '$'  },
+  { code: 'USD', name: 'US Dollar',           symbol: '$'  },
+  { code: 'EUR', name: 'Euro',                symbol: '€'  },
+  { code: 'JPY', name: 'Japanese Yen',        symbol: '¥'  },
+  { code: 'GBP', name: 'British Pound',       symbol: '£'  },
+  { code: 'AUD', name: 'Australian Dollar',   symbol: 'A$' },
+  { code: 'CAD', name: 'Canadian Dollar',     symbol: 'C$' },
+  { code: 'CHF', name: 'Swiss Franc',         symbol: 'Fr' },
+  { code: 'CNY', name: 'Chinese Yuan',        symbol: '¥'  },
+  { code: 'BRL', name: 'Brazilian Real',      symbol: 'R$' }
+];
+
+// ============================================================
 // I18N — Internationalization module
 // Industry-standard approach: key-based lookup, data-i18n attrs,
 // localStorage persistence, automatic DOM re-render on switch.
@@ -22,6 +38,7 @@ var I18n = {
         title: 'Inversiones',
         subtitle: 'Snapshots mensuales — rendimiento y sugerencias de asignación',
         addSnapshot: '+ Snapshot',
+        manageFunds: 'Fondos',
         monthLabel: 'Mes',
         sectionSnapshot: 'Snapshot del Mes',
         chartHistory: 'Histórico por Fondo',
@@ -34,6 +51,9 @@ var I18n = {
           labelCurrBalance: 'Balance Actual',
           labelCurrency: 'Moneda',
           labelInvested: 'Invertido este mes (CLP)',
+          titleFunds: 'Gestionar Fondos',
+          labelFundName: 'Nombre', labelFundCurrency: 'Moneda', labelFundDesc: 'Descripción',
+          saveFund: 'Agregar Fondo',
           previewEmpty: 'Ingresa balances para ver rendimiento',
           save: 'Guardar', cancel: 'Cancelar'
         },
@@ -169,6 +189,7 @@ var I18n = {
         title: 'Investments',
         subtitle: 'Monthly snapshots — performance and allocation suggestions',
         addSnapshot: '+ Snapshot',
+        manageFunds: 'Funds',
         monthLabel: 'Month',
         sectionSnapshot: "Month's Snapshot",
         chartHistory: 'History by Fund',
@@ -181,6 +202,9 @@ var I18n = {
           labelCurrBalance: 'Current Balance',
           labelCurrency: 'Currency',
           labelInvested: 'Invested this month (CLP)',
+          titleFunds: 'Manage Funds',
+          labelFundName: 'Name', labelFundCurrency: 'Currency', labelFundDesc: 'Description',
+          saveFund: 'Add Fund',
           previewEmpty: 'Enter balances to see return',
           save: 'Save', cancel: 'Cancel'
         },

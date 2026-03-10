@@ -16,7 +16,12 @@ var App = {
 
     // Load market data from cache for instant render
     var mkt = Store.get(SK.cMarket, {});
-    if (mkt.usd) { MarketData.usd = mkt.usd; MarketData.uf = mkt.uf; MarketData.btc = mkt.btc; MarketData._render(); }
+    if (mkt.usd) {
+      MarketData.usd = mkt.usd; MarketData.uf = mkt.uf;
+      MarketData.btc = mkt.btc; MarketData.eur = mkt.eur;
+      if (mkt.rates) MarketData._rates = mkt.rates;
+      MarketData._render();
+    }
 
     // Render default active view
     Investments.renderAll();

@@ -29,5 +29,13 @@ var Fmt = {
   },
   uf: function(v) {
     return v == null ? '--' : Fmt.num(v, 2) + ' UF';
+  },
+  // Format a non-CLP foreign currency amount using native symbol
+  foreign: function(v, code) {
+    if (v == null) return '--';
+    if (code === 'CLP') return Fmt.clp(v);
+    try {
+      return new Intl.NumberFormat('en-US', {style:'currency', currency:code, maximumFractionDigits:2}).format(v);
+    } catch(e) { return code + '\u00a0' + v.toFixed(2); }
   }
 };

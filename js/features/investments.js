@@ -96,7 +96,7 @@ var Investments = {
       prevBalance: prev, currBalance: curr,
       invested: parseFloat(document.getElementById('sn-invested').value) || 0,
       returnPct: prev ? (curr - prev) / prev * 100 : 0,
-      usdRate: MarketData.getUSD()
+      clpRate: MarketData.getRate(document.getElementById('sn-currency').value)
     };
     d.snapshots = (d.snapshots || []).filter(function(s) {
       if (existingId) return s.id !== existingId;
@@ -147,10 +147,10 @@ var Investments = {
 
   _renderKPIs: function(month) {
     var snaps = this.getSnaps().filter(function(s) { return s.month === month; });
-    var usd = MarketData.getUSD(); var totalCLP = 0, totalRet = 0, totalInv = 0;
+    var totalCLP = 0, totalRet = 0, totalInv = 0;
     snaps.forEach(function(s) {
-      var v = s.currency === 'USD' ? s.currBalance * usd : s.currBalance;
-      totalCLP += (v || 0); totalRet += (s.returnPct || 0); totalInv += (s.invested || 0);
+      totalCLP += ((s.currBalance || 0) * MarketData.getRate(s.currency));
+      totalRet += (s.returnPct || 0); totalInv += (s.invested || 0);
     });
     var avgRet = snaps.length ? totalRet / snaps.length : 0;
     var el = document.getElementById('inv-kpis'); if (!el) return;
@@ -170,16 +170,16 @@ var Investments = {
       document.getElementById('inv-suggest').innerHTML = '';
       return;
     }
-    var usd = MarketData.getUSD(); var totalCLP = 0;
-    snaps.forEach(function(s) { totalCLP += s.currency === 'USD' ? s.currBalance * usd : s.currBalance; });
+    var totalCLP = 0;
+    snaps.forEach(function(s) { totalCLP += (s.currBalance || 0) * MarketData.getRate(s.currency); });
     snaps.sort(function(a, b) { return b.currBalance - a.currBalance; });
     var t = I18n.t.bind(I18n);
     el.innerHTML = '<table><thead><tr><th>' + t('investments.table.fund') + '</th><th>' + t('investments.table.currency') + '</th><th>' + t('investments.table.prev') + '</th><th>' + t('investments.table.curr') + '</th><th>' + t('investments.table.return') + '</th><th>' + t('investments.table.clpEquiv') + '</th><th>' + t('investments.table.portPct') + '</th><th>' + t('investments.table.invested') + '</th><th></th></tr></thead><tbody>' +
       snaps.map(function(s) {
-        var clp = s.currency === 'USD' ? s.currBalance * usd : s.currBalance;
+        var clp = (s.currBalance || 0) * MarketData.getRate(s.currency);
         var pct = totalCLP ? clp / totalCLP * 100 : 0;
-        var prev = s.currency === 'USD' ? '$' + Fmt.num(s.prevBalance) : Fmt.clp(s.prevBalance);
-        var curr2 = s.currency === 'USD' ? '$' + Fmt.num(s.currBalance) : Fmt.clp(s.currBalance);
+        var prev  = Fmt.foreign(s.prevBalance, s.currency);
+        var curr2 = Fmt.foreign(s.currBalance, s.currency);
         return '<tr><td style="font-weight:700">' + s.fundName + '</td>' +
           '<td><span class="badge bb">' + s.currency + '</span></td>' +
           '<td>' + prev + '</td><td>' + curr2 + '</td>' +
@@ -192,10 +192,10 @@ var Investments = {
             '<button class="btn btn-red" style="padding:2px 7px;font-size:10px" onclick="Investments.deleteSnap(\'' + s.id + '\')">×</button>' +
           '</div></td></tr>';
       }).join('') + '</tbody></table>';
-    this._renderSuggest(snaps, totalCLP, usd, month);
+    this._renderSuggest(snaps, totalCLP, month);
   },
 
-  _renderSuggest: function(snaps, _totalCLP, _usd, month) {
+  _renderSuggest: function(snaps, _totalCLP, month) {
     var el = document.getElementById('inv-suggest'); if (!el) return;
     var cfg = Store.get(SK.config, {}); var salary = parseFloat(cfg.salary) || 0;
     var savPct = 100 - parseFloat(cfg.pctNeeds || 50) - parseFloat(cfg.pctWants || 10);
@@ -251,7 +251,7 @@ var Investments = {
   _renderCharts: function() {
     var snaps = this.getSnaps();
     if (!snaps.length) { Charts.destroy('ch-inv-hist'); Charts.destroy('ch-inv-ret'); return; }
-    var usd = MarketData.getUSD(); var funds = [], months = [];
+    var funds = [], months = [];
     snaps.forEach(function(s) {
       if (funds.indexOf(s.fundName) === -1) funds.push(s.fundName);
       if (months.indexOf(s.month) === -1) months.push(s.month);
@@ -260,7 +260,7 @@ var Investments = {
     var histDS = funds.map(function(f, i) {
       return {label:f, borderColor:Charts.C[i % Charts.C.length], backgroundColor:'transparent',
         pointBackgroundColor:Charts.C[i % Charts.C.length], tension:0.3, borderWidth:2, pointRadius:3,
-        data:months.map(function(m) { var s = snaps.filter(function(sn) { return sn.month === m && sn.fundName === f; })[0]; return s ? (s.currency === 'USD' ? s.currBalance * usd : s.currBalance) : null; })};
+        data:months.map(function(m) { var s = snaps.filter(function(sn) { return sn.month === m && sn.fundName === f; })[0]; return s ? (s.currBalance || 0) * MarketData.getRate(s.currency) : null; })};
     });
     Charts.create('ch-inv-hist', 'line', months, histDS, {});
     var retDS = funds.map(function(f, i) {
