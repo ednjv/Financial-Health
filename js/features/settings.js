@@ -13,7 +13,7 @@ var Settings = {
     sv('cfg-commission', cfg.propCommission != null ? cfg.propCommission : 10);
     this.calcSavings();
     var stats = document.getElementById('cfg-storage-stats');
-    if (stats) stats.textContent = 'Usado: ' + Store.size() + ' | Keys: ' + Store.keys().length;
+    if (stats) stats.textContent = I18n.t('settings.storageUsed') + ' ' + Store.size() + ' | ' + I18n.t('settings.storageKeys') + ' ' + Store.keys().length;
   },
 
   save: function() {
@@ -24,7 +24,7 @@ var Settings = {
       propCommission:parseFloat(document.getElementById('cfg-commission').value) || 10
     });
     Debug.info('Settings saved');
-    alert('Configuración guardada');
+    alert(I18n.t('settings.savedAlert'));
   },
 
   calcSavings: function() {

@@ -22,15 +22,15 @@ var DataIO = {
         var data = JSON.parse(e.target.result); var count = 0;
         Object.keys(data).forEach(function(k) { if (k.indexOf('sfv1:') === 0) { Store.set(k, data[k]); count++; } });
         Debug.info('Imported ' + count + ' keys');
-        alert('Importados ' + count + ' registros');
+        alert(I18n.t('dataio.imported', {count: count}));
         App.init();
-      } catch(err) { Debug.err('Import: ' + err.message); alert('Error: ' + err.message); }
+      } catch(err) { Debug.err('Import: ' + err.message); alert(I18n.t('dataio.error') + ' ' + err.message); }
     };
     reader.readAsText(file);
   },
 
   clearAll: function() {
-    if (!confirm('Borrar TODOS los datos locales? No se puede deshacer.')) return;
+    if (!confirm(I18n.t('dataio.clearConfirm'))) return;
     Store.keys().forEach(function(k) { Store.del(k); });
     Debug.warn('All data cleared');
     location.reload();

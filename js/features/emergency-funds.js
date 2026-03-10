@@ -1,7 +1,7 @@
 'use strict';
 // ============================================================
 // EMERGENCY FUNDS FEATURE
-// Depends on: Store, SK, Debug, Investments, Properties, Settings
+// Depends on: Store, SK, Debug, Investments, Properties, Settings, I18n
 // ============================================================
 var EmergencyFunds = {
   // ========== DATA ACCESS ==========
@@ -27,14 +27,10 @@ var EmergencyFunds = {
 
   /**
    * Calcula el monto de la meta en CLP
-   * @param {Object} fund - Fund object con goalType, goalValue
-   * @param {number} salary - Sueldo actual en CLP (de Settings)
-   * @param {number} monthlyDividends - Dividendos mensuales en CLP
-   * @returns {number} Monto de la meta en CLP
    */
   calculateGoalAmount: function(fund, salary, monthlyDividends) {
     if (!fund) return 0;
-    
+
     switch(fund.goalType) {
       case 'param_months': {
         var cfg = Store.get(SK.config, {}) || {};
@@ -59,20 +55,16 @@ var EmergencyFunds = {
 
   /**
    * Obtiene el balance actual del fondo basado en la inversión
-   * @param {string} investmentId - ID de la inversión
-   * @returns {number} Balance actual en CLP o USD (según inversión)
    */
   calculateCurrentBalance: function(investmentId) {
     if (!investmentId) return 0;
-    
+
     var snaps = Investments.getSnaps();
-    var currentMonth = new Date().toISOString().slice(0, 7);
-    
-    // Busca el snapshot más reciente para esta inversión
+
     var relevantSnaps = snaps
       .filter(function(s) { return s.fundId === investmentId; })
       .sort(function(a, b) { return (b.month || '').localeCompare(a.month || ''); });
-    
+
     if (relevantSnaps.length > 0) {
       return relevantSnaps[0].currBalance || 0;
     }
@@ -81,34 +73,26 @@ var EmergencyFunds = {
 
   /**
    * Calcula el progreso hacia la meta
-   * @param {number} currentBalance - Balance actual
-   * @param {number} goalAmount - Monto de la meta
-   * @returns {Object} {percentage, shortfall, met}
    */
   calculateProgress: function(currentBalance, goalAmount) {
     if (goalAmount <= 0) {
       return { percentage: 0, shortfall: goalAmount, met: false };
     }
-    
+
     var percentage = Math.min(100, (currentBalance / goalAmount) * 100);
     var shortfall = Math.max(0, goalAmount - currentBalance);
     var met = currentBalance >= goalAmount;
-    
+
     return { percentage: percentage, shortfall: shortfall, met: met };
   },
 
   /**
    * Obtiene la suma de dividendos mensuales de todas las propiedades
-   * @returns {number} Suma de dividendos en CLP
    */
   getMonthlyDividends: function() {
-    // La meta de "dividend_months" debe basarse en el costo mensual de
-    // dividendos del último mes registrado, sumando todos los dividendos
-    // de ese mes para todas las propiedades.
     var rents = Properties.getRents() || [];
     if (!rents.length) return 0;
 
-    // encontrar el mes más reciente que tenga un dividend > 0
     var latestMonth = null;
     rents.forEach(function(r) {
       var d = parseFloat(r.dividend) || 0;
@@ -121,7 +105,6 @@ var EmergencyFunds = {
 
     if (!latestMonth) return 0;
 
-    // sumar todos los dividendos de ese mes
     var total = rents
       .filter(function(r) { return r.month === latestMonth; })
       .reduce(function(sum, r) { return sum + (parseFloat(r.dividend) || 0); }, 0);
@@ -132,7 +115,6 @@ var EmergencyFunds = {
   // ========== MODAL OPERATIONS ==========
 
   openAddModal: function() {
-    // Limpiar formulario
     document.getElementById('emf-id').value = '';
     document.getElementById('emf-name').value = '';
     document.getElementById('emf-desc').value = '';
@@ -142,7 +124,7 @@ var EmergencyFunds = {
     document.getElementById('emf-goal-value').value = '';
     document.getElementById('emf-investment').value = '';
 
-    document.getElementById('emf-modal-title').textContent = 'Crear Fondo de Emergencia';
+    document.getElementById('emf-modal-title').textContent = I18n.t('emergency.modal.titleAdd');
     this._populateInvestmentsList();
     this._onGoalTypeChange();
     openModal('m-emergency-fund');
@@ -151,14 +133,14 @@ var EmergencyFunds = {
   openEditModal: function(fundId) {
     var fund = this.getFunds().filter(function(f) { return f.id === fundId; })[0];
     if (!fund) return;
-    
+
     this._populateInvestmentsList();
-    
+
     document.getElementById('emf-id').value = fund.id;
     document.getElementById('emf-name').value = fund.name || '';
     document.getElementById('emf-desc').value = fund.description || '';
     document.getElementById('emf-notes').value = fund.notes || '';
-    
+
     // Legacy salary_months maps to param_months with needs basis
     var goalType = fund.goalType === 'salary_months' ? 'param_months' : (fund.goalType || 'param_months');
     document.getElementById('emf-goal-type').value = goalType;
@@ -167,7 +149,7 @@ var EmergencyFunds = {
     document.getElementById('emf-goal-value').value = fund.goalValue || '';
     document.getElementById('emf-investment').value = fund.investmentId || '';
 
-    document.getElementById('emf-modal-title').textContent = 'Editar Fondo de Emergencia';
+    document.getElementById('emf-modal-title').textContent = I18n.t('emergency.modal.titleEdit');
     this._onGoalTypeChange();
     openModal('m-emergency-fund');
   },
@@ -179,7 +161,7 @@ var EmergencyFunds = {
   _populateInvestmentsList: function() {
     var select = document.getElementById('emf-investment');
     var funds = Investments.getFunds();
-    select.innerHTML = '<option value="">-- Selecciona una inversión --</option>' +
+    select.innerHTML = '<option value="">' + I18n.t('emergency.modal.selectInvestment') + '</option>' +
       funds.map(function(f) {
         return '<option value="' + f.id + '">' + f.name + ' (' + f.currency + ')</option>';
       }).join('');
@@ -194,7 +176,7 @@ var EmergencyFunds = {
 
     if (goalType === 'param_months') {
       basisRow.style.display = '';
-      if (goalLbl) goalLbl.textContent = 'Número de meses';
+      if (goalLbl) goalLbl.textContent = I18n.t('emergency.modal.labelGoalValue');
       if (goalInput) goalInput.placeholder = 'Ej: 6';
       var basis = document.getElementById('emf-goal-basis').value;
       var cfg = Store.get(SK.config, {}) || {};
@@ -204,27 +186,27 @@ var EmergencyFunds = {
       var baseAmount, basisLabel;
       if (basis === 'wants') {
         baseAmount = salary * pctWants / 100;
-        basisLabel = pctWants + '% Deseos';
+        basisLabel = pctWants + I18n.t('emergency.modal.basisWantsLabel');
       } else if (basis === 'salary') {
         baseAmount = salary;
-        basisLabel = '100% Sueldo completo';
+        basisLabel = I18n.t('emergency.modal.basisSalaryLabel');
       } else {
         baseAmount = salary * pctNeeds / 100;
-        basisLabel = pctNeeds + '% Necesidades';
+        basisLabel = pctNeeds + I18n.t('emergency.modal.basisNeedsLabel');
       }
       infoEl.innerHTML = 'Base: <strong style="color:var(--cyan)">' + basisLabel + '</strong>' +
-        ' &nbsp;·&nbsp; <strong style="color:var(--green)">' + Fmt.clp(baseAmount) + '</strong>/mes' +
-        '<div style="font-size:10px;margin-top:3px;opacity:0.7">Parámetros configurables en Ajustes</div>';
+        ' &nbsp;·&nbsp; <strong style="color:var(--green)">' + Fmt.clp(baseAmount) + '</strong>' + I18n.t('emergency.modal.perMonth') +
+        '<div style="font-size:10px;margin-top:3px;opacity:0.7">' + I18n.t('emergency.modal.paramsInfo') + '</div>';
       infoEl.style.display = 'block';
     } else if (goalType === 'dividend_months') {
       basisRow.style.display = 'none';
       infoEl.style.display = 'none';
-      if (goalLbl) goalLbl.textContent = 'Número de meses';
+      if (goalLbl) goalLbl.textContent = I18n.t('emergency.modal.labelGoalValue');
       if (goalInput) goalInput.placeholder = 'Ej: 6';
     } else {
       basisRow.style.display = 'none';
       infoEl.style.display = 'none';
-      if (goalLbl) goalLbl.textContent = 'Monto (CLP)';
+      if (goalLbl) goalLbl.textContent = I18n.t('emergency.modal.labelGoalValueAmount');
       if (goalInput) goalInput.placeholder = 'Ej: 5000000';
     }
     this._updatePreview();
@@ -239,26 +221,27 @@ var EmergencyFunds = {
     var salary = (Store.get(SK.config, {}) || {}).salary || 0;
     var monthlyDividends = this.getMonthlyDividends();
     var currentBalance = this.calculateCurrentBalance(investmentId);
-    
+
     var goal = this.calculateGoalAmount(
       { goalType: goalType, goalValue: goalValue, goalBasis: goalBasis },
       salary,
       monthlyDividends
     );
-    
+
     var progress = this.calculateProgress(currentBalance, goal);
-    
+    var t = I18n.t.bind(I18n);
+
     var preview = document.getElementById('emf-preview');
     if (goal > 0) {
       preview.innerHTML =
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-family:var(--mono);font-size:12px">' +
-        '<div><div style="color:var(--muted)">META</div><div style="font-size:14px">' + Fmt.short(goal) + '</div></div>' +
-        '<div><div style="color:var(--muted)">BALANCE</div><div style="font-size:14px">' + Fmt.short(currentBalance) + '</div></div>' +
-        '<div><div style="color:var(--muted)">FALTANTE</div><div style="font-size:14px;color:' + (progress.shortfall > 0 ? 'var(--amber)' : 'var(--green)') + '">' + Fmt.short(progress.shortfall) + '</div></div>' +
-        '<div><div style="color:var(--muted)">AVANCE</div><div style="font-size:14px;color:' + (progress.percentage >= 100 ? 'var(--green)' : 'var(--cyan)') + '">' + Fmt.pct(progress.percentage) + '</div></div>' +
+        '<div><div style="color:var(--muted)">' + t('emergency.preview.goal') + '</div><div style="font-size:14px">' + Fmt.short(goal) + '</div></div>' +
+        '<div><div style="color:var(--muted)">' + t('emergency.preview.balance') + '</div><div style="font-size:14px">' + Fmt.short(currentBalance) + '</div></div>' +
+        '<div><div style="color:var(--muted)">' + t('emergency.preview.shortfall') + '</div><div style="font-size:14px;color:' + (progress.shortfall > 0 ? 'var(--amber)' : 'var(--green)') + '">' + Fmt.short(progress.shortfall) + '</div></div>' +
+        '<div><div style="color:var(--muted)">' + t('emergency.preview.progress') + '</div><div style="font-size:14px;color:' + (progress.percentage >= 100 ? 'var(--green)' : 'var(--cyan)') + '">' + Fmt.pct(progress.percentage) + '</div></div>' +
         '</div>';
     } else {
-      preview.innerHTML = '<div style="font-size:12px;color:var(--muted)">Completa los campos para ver preview</div>';
+      preview.innerHTML = '<div style="font-size:12px;color:var(--muted)">' + t('emergency.modal.previewEmpty') + '</div>';
     }
   },
 
@@ -272,20 +255,10 @@ var EmergencyFunds = {
     var goalValue = parseFloat(document.getElementById('emf-goal-value').value) || 0;
     var investmentId = document.getElementById('emf-investment').value;
 
-    // Validations
-    if (!name.trim()) {
-      Debug.warn('El nombre del fondo es requerido');
-      return;
-    }
-    if (!investmentId) {
-      Debug.warn('Debes seleccionar una inversión');
-      return;
-    }
-    if (goalValue <= 0) {
-      Debug.warn('El valor de la meta debe ser mayor a 0');
-      return;
-    }
-    
+    if (!name.trim()) { Debug.warn('El nombre del fondo es requerido'); return; }
+    if (!investmentId) { Debug.warn('Debes seleccionar una inversión'); return; }
+    if (goalValue <= 0) { Debug.warn('El valor de la meta debe ser mayor a 0'); return; }
+
     var data = this._get();
     var fund = {
       id: id || uid(),
@@ -298,15 +271,13 @@ var EmergencyFunds = {
       investmentId: investmentId,
       createdAt: id ? (this.getFunds().filter(function(f) { return f.id === id; })[0] || {}).createdAt : new Date().toISOString()
     };
-    
+
     if (id) {
-      // Update existing
       data.funds = data.funds.map(function(f) { return f.id === id ? fund : f; });
     } else {
-      // Add new
       data.funds.push(fund);
     }
-    
+
     this._save(data);
     Debug.info('Fondo guardado: ' + name);
     this.closeModal();
@@ -314,8 +285,8 @@ var EmergencyFunds = {
   },
 
   deleteFund: function(fundId) {
-    if (!confirm('¿Eliminar este fondo de emergencia?')) return;
-    
+    if (!confirm(I18n.t('emergency.confirm.deleteFund'))) return;
+
     var data = this._get();
     data.funds = data.funds.filter(function(f) { return f.id !== fundId; });
     this._save(data);
@@ -334,44 +305,46 @@ var EmergencyFunds = {
     var funds = this.getFunds();
     var salary = (Store.get(SK.config, {}) || {}).salary || 0;
     var monthlyDividends = this.getMonthlyDividends();
-    
+
     var totalGoal = 0;
     var totalBalance = 0;
     var avgProgress = 0;
     var fundCount = funds.length;
-    
+
     funds.forEach(function(fund) {
       var goal = EmergencyFunds.calculateGoalAmount(fund, salary, monthlyDividends);
       var balance = EmergencyFunds.calculateCurrentBalance(fund.investmentId);
       var progress = EmergencyFunds.calculateProgress(balance, goal);
-      
+
       totalGoal += goal;
       totalBalance += balance;
       avgProgress += progress.percentage;
     });
-    
+
     if (fundCount > 0) avgProgress = avgProgress / fundCount;
     var totalShortfall = Math.max(0, totalGoal - totalBalance);
-    
+    var t = I18n.t.bind(I18n);
+
     var el = document.getElementById('emf-kpis'); if (!el) return;
     el.innerHTML =
-      '<div class="card-sm"><div class="metric-label">Meta Total</div><div class="metric-val">' + Fmt.short(totalGoal) + '</div></div>' +
-      '<div class="card-sm"><div class="metric-label">Balance Total</div><div class="metric-val" style="color:var(--green)">' + Fmt.short(totalBalance) + '</div></div>' +
-      '<div class="card-sm"><div class="metric-label">Faltante</div><div class="metric-val" style="color:var(--amber)">' + Fmt.short(totalShortfall) + '</div></div>' +
-      '<div class="card-sm"><div class="metric-label">Avance Promedio</div><div class="metric-val" style="color:' + (avgProgress >= 100 ? 'var(--green)' : 'var(--cyan)') + '">' + Fmt.pct(avgProgress) + '</div></div>';
+      '<div class="card-sm"><div class="metric-label">' + t('emergency.kpi.totalGoal') + '</div><div class="metric-val">' + Fmt.short(totalGoal) + '</div></div>' +
+      '<div class="card-sm"><div class="metric-label">' + t('emergency.kpi.totalBalance') + '</div><div class="metric-val" style="color:var(--green)">' + Fmt.short(totalBalance) + '</div></div>' +
+      '<div class="card-sm"><div class="metric-label">' + t('emergency.kpi.shortfall') + '</div><div class="metric-val" style="color:var(--amber)">' + Fmt.short(totalShortfall) + '</div></div>' +
+      '<div class="card-sm"><div class="metric-label">' + t('emergency.kpi.avgProgress') + '</div><div class="metric-val" style="color:' + (avgProgress >= 100 ? 'var(--green)' : 'var(--cyan)') + '">' + Fmt.pct(avgProgress) + '</div></div>';
   },
 
   renderFunds: function() {
     var funds = this.getFunds();
     var salary = (Store.get(SK.config, {}) || {}).salary || 0;
     var monthlyDividends = this.getMonthlyDividends();
-    
+    var t = I18n.t.bind(I18n);
+
     var html = '';
-    
+
     if (funds.length === 0) {
       html = '<div style="text-align:center;padding:40px;color:var(--muted)">' +
-             '<div style="font-size:14px">Aún no hay fondos de emergencia</div>' +
-             '<div style="font-size:12px;margin-top:8px">Crea uno para comenzar a rastrear tus metas</div>' +
+             '<div style="font-size:14px">' + t('emergency.empty.title') + '</div>' +
+             '<div style="font-size:12px;margin-top:8px">' + t('emergency.empty.hint') + '</div>' +
              '</div>';
     } else {
       var self = this;
@@ -379,25 +352,28 @@ var EmergencyFunds = {
         var goal = EmergencyFunds.calculateGoalAmount(fund, salary, monthlyDividends);
         var balance = EmergencyFunds.calculateCurrentBalance(fund.investmentId);
         var progress = EmergencyFunds.calculateProgress(balance, goal);
-        
-        // Find investment name
+
         var invName = Investments.getFunds()
           .filter(function(f) { return f.id === fund.investmentId; })[0];
-        invName = invName ? invName.name : 'Inversión desconocida';
-        
+        invName = invName ? invName.name : t('emergency.card.unknownInvestment');
+
         var goalLabel = '';
         if (fund.goalType === 'param_months') {
-          var basisNames = { needs: '% necesidades', wants: '% deseos', salary: 'sueldo completo' };
-          goalLabel = fund.goalValue + ' meses × ' + (basisNames[fund.goalBasis] || '% necesidades');
+          var basisNames = {
+            needs: t('emergency.card.basisNeeds'),
+            wants: t('emergency.card.basisWants'),
+            salary: t('emergency.card.basisSalary')
+          };
+          goalLabel = fund.goalValue + ' ' + t('emergency.card.goalLabelMonths') + ' ' + (basisNames[fund.goalBasis] || t('emergency.card.basisNeeds'));
         } else if (fund.goalType === 'salary_months') { // legacy
           var pctNeedsLbl = ((Store.get(SK.config, {}) || {}).pctNeeds) || 50;
-          goalLabel = fund.goalValue + ' meses × ' + pctNeedsLbl + '% necesidades';
+          goalLabel = fund.goalValue + ' ' + t('emergency.card.goalLabelMonths') + ' ' + pctNeedsLbl + t('emergency.card.basisNeeds');
         } else if (fund.goalType === 'dividend_months') {
-          goalLabel = fund.goalValue + ' meses de dividendos';
+          goalLabel = fund.goalValue + ' ' + t('emergency.card.goalLabelDivMonths');
         } else if (fund.goalType === 'fixed_amount') {
-          goalLabel = Fmt.short(fund.goalValue) + ' fijo';
+          goalLabel = Fmt.short(fund.goalValue) + ' ' + t('emergency.card.goalLabelFixed');
         }
-        
+
         return '<div class="card" style="margin-bottom:14px">' +
                '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">' +
                '<div>' +
@@ -407,29 +383,29 @@ var EmergencyFunds = {
                (fund.notes ? '<div style="color:var(--muted);font-size:11px;margin-top:4px;font-style:italic">' + fund.notes + '</div>' : '') +
                '</div>' +
                '<div style="display:flex;gap:6px">' +
-               '<button class="btn btn-ghost" style="padding:3px 8px;font-size:11px" onclick="EmergencyFunds.openEditModal(\'' + fund.id + '\')">Editar</button>' +
+               '<button class="btn btn-ghost" style="padding:3px 8px;font-size:11px" onclick="EmergencyFunds.openEditModal(\'' + fund.id + '\')">' + t('emergency.card.edit') + '</button>' +
                '<button class="btn btn-red" style="padding:3px 8px;font-size:11px" onclick="EmergencyFunds.deleteFund(\'' + fund.id + '\')">×</button>' +
                '</div>' +
                '</div>' +
-               
+
                '<div style="margin-bottom:12px">' +
                '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px">' +
-               '<span style="color:var(--muted)">Progreso</span>' +
+               '<span style="color:var(--muted)">' + t('emergency.card.progress') + '</span>' +
                '<span style="font-weight:600;color:' + (progress.met ? 'var(--green)' : 'var(--cyan)') + '">' + Fmt.pct(progress.percentage) + '</span>' +
                '</div>' +
                self._renderProgressBar(progress.percentage) +
                '</div>' +
-               
+
                '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;font-size:12px;font-family:var(--mono)">' +
-               '<div><div style="color:var(--muted);font-size:10px">BALANCE</div><div style="font-size:14px;font-weight:600">' + Fmt.short(balance) + '</div></div>' +
-               '<div><div style="color:var(--muted);font-size:10px">META</div><div style="font-size:14px;font-weight:600">' + Fmt.short(goal) + '</div></div>' +
-               '<div><div style="color:var(--muted);font-size:10px">FALTANTE</div><div style="font-size:14px;font-weight:600;color:' + (progress.shortfall > 0 ? 'var(--amber)' : 'var(--green)') + '">' + Fmt.short(progress.shortfall) + '</div></div>' +
+               '<div><div style="color:var(--muted);font-size:10px">' + t('emergency.card.balance') + '</div><div style="font-size:14px;font-weight:600">' + Fmt.short(balance) + '</div></div>' +
+               '<div><div style="color:var(--muted);font-size:10px">' + t('emergency.card.goal') + '</div><div style="font-size:14px;font-weight:600">' + Fmt.short(goal) + '</div></div>' +
+               '<div><div style="color:var(--muted);font-size:10px">' + t('emergency.card.shortfall') + '</div><div style="font-size:14px;font-weight:600;color:' + (progress.shortfall > 0 ? 'var(--amber)' : 'var(--green)') + '">' + Fmt.short(progress.shortfall) + '</div></div>' +
                '</div>' +
-               
+
                '</div>';
       }).join('');
     }
-    
+
     var container = document.getElementById('emf-funds');
     if (container) container.innerHTML = html;
   },

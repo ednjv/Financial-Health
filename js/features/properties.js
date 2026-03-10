@@ -1,7 +1,7 @@
 'use strict';
 // ============================================================
 // PROPERTIES FEATURE
-// Depends on: Store, SK, Debug, Fmt, MarketData, uid, openModal, closeModal
+// Depends on: Store, SK, Debug, Fmt, MarketData, uid, openModal, closeModal, I18n
 // ============================================================
 var Properties = {
   getAll:   function() { return Store.get(SK.properties, []); },
@@ -23,7 +23,9 @@ var Properties = {
   openModal: function(id) {
     this._ensure();
     var p = id ? this.getAll().filter(function(x) { return x.id === id; })[0] : null;
-    document.getElementById('prop-modal-title').textContent = id ? 'Editar Propiedad' : 'Agregar Propiedad';
+    document.getElementById('prop-modal-title').textContent = id
+      ? I18n.t('properties.modal.titleEdit')
+      : I18n.t('properties.modal.titleAdd');
     var map = [
       ['pr-id','id'],['pr-name','name'],['pr-addr','address'],['pr-commune','commune'],['pr-unit','unit'],
       ['pr-sqm','sqm'],['pr-beds','bedrooms'],['pr-baths','bathrooms'],['pr-layout','layout'],
@@ -57,7 +59,7 @@ var Properties = {
   },
 
   delete: function(id) {
-    if (!confirm('Eliminar propiedad?')) return;
+    if (!confirm(I18n.t('properties.confirm.deleteProperty'))) return;
     Store.set(SK.properties, this.getAll().filter(function(p) { return p.id !== id; }));
     this.renderAll();
   },
@@ -70,7 +72,7 @@ var Properties = {
     this._ensure();
     this._commissionPct = (Store.get(SK.config, {}).propCommission || 10);
     var lbl = document.getElementById('rn-commission-label');
-    if (lbl) lbl.textContent = 'Comisión admin (' + this._commissionPct + '%)';
+    if (lbl) lbl.textContent = I18n.t('properties.modal.labelCommission') + ' (' + this._commissionPct + '%)';
     var sel = document.getElementById('rn-prop');
     sel.innerHTML = this.getAll().map(function(p) { return '<option value="' + p.id + '">' + p.name + ' ' + p.unit + '</option>'; }).join('');
     var title = document.querySelector('#m-rent .mtitle');
@@ -78,7 +80,7 @@ var Properties = {
       var r = this.getRents().filter(function(x) { return x.id === id; })[0];
       if (!r) return;
       this._editingRentId = id;
-      if (title) title.textContent = 'Editar Arriendo';
+      if (title) title.textContent = I18n.t('properties.modal.titleEditRent');
       sel.value = r.propertyId;
       document.getElementById('rn-month').value = r.month;
       document.getElementById('rn-amount').value = r.amount || '';
@@ -90,7 +92,7 @@ var Properties = {
       document.getElementById('rn-notes').value = r.notes || '';
     } else {
       this._editingRentId = null;
-      if (title) title.textContent = 'Registrar Arriendo';
+      if (title) title.textContent = I18n.t('properties.modal.titleAddRent');
       document.getElementById('rn-month').value = new Date().toISOString().slice(0, 7);
       ['rn-amount','rn-income','rn-dividend','rn-commission','rn-net','rn-notes'].forEach(function(eid) { document.getElementById(eid).value = ''; });
       var defProp = this.getAll().filter(function(x) { return x.id === sel.value; })[0];
@@ -151,13 +153,13 @@ var Properties = {
       var m = this.getM2().filter(function(x) { return x.id === id; })[0];
       if (!m) return;
       this._editingM2Id = id;
-      if (title) title.textContent = 'Editar Valor m²';
+      if (title) title.textContent = I18n.t('properties.modal.titleEditM2');
       sel.value = m.propertyId;
       document.getElementById('m2-month').value = m.month;
       document.getElementById('m2-val').value = m.value || '';
     } else {
       this._editingM2Id = null;
-      if (title) title.textContent = 'Registrar Valor m²';
+      if (title) title.textContent = I18n.t('properties.modal.titleAddM2');
       document.getElementById('m2-month').value = new Date().toISOString().slice(0, 7);
       document.getElementById('m2-val').value = '';
     }
@@ -180,7 +182,7 @@ var Properties = {
   },
 
   deleteM2: function(id) {
-    if (!confirm('Eliminar registro de valor m²?')) return;
+    if (!confirm(I18n.t('properties.confirm.deleteM2'))) return;
     Store.set(SK.m2, this.getM2().filter(function(m) { return m.id !== id; }));
     this._renderM2(); this.renderAll();
   },
@@ -188,8 +190,9 @@ var Properties = {
   _renderM2: function() {
     var data = this.getM2().slice().sort(function(a, b) { return new Date(b.month + '-01') - new Date(a.month + '-01'); });
     var props = this.getAll(); var el = document.getElementById('m2-history'); if (!el) return;
+    var t = I18n.t.bind(I18n);
     el.innerHTML = data.length ?
-      '<table><thead><tr><th>Propiedad</th><th>Mes</th><th>Valor m²</th><th></th></tr></thead><tbody>' +
+      '<table><thead><tr><th>' + t('properties.m2Table.property') + '</th><th>' + t('properties.m2Table.month') + '</th><th>' + t('properties.m2Table.value') + '</th><th></th></tr></thead><tbody>' +
       data.map(function(d) {
         var p = props.filter(function(x) { return x.id === d.propertyId; })[0];
         return '<tr><td>' + (p ? p.name : d.propertyId) + '</td><td>' + d.month + '</td><td>' + Fmt.clp(d.value) + '</td><td style="white-space:nowrap">' +
@@ -197,11 +200,11 @@ var Properties = {
           '<button class="btn btn-red" style="padding:2px 7px;font-size:10px" onclick="Properties.deleteM2(\'' + d.id + '\')">×</button>' +
           '</td></tr>';
       }).join('') + '</tbody></table>' :
-      '<p style="font-size:12px;color:var(--muted)">Sin registros</p>';
+      '<p style="font-size:12px;color:var(--muted)">' + t('properties.m2Table.noRecords') + '</p>';
   },
 
   deleteRent: function(id) {
-    if (!confirm('Eliminar?')) return;
+    if (!confirm(I18n.t('properties.confirm.deleteRent'))) return;
     Store.set(SK.rents, this.getRents().filter(function(r) { return r.id !== id; }));
     this.renderAll();
   },
@@ -218,6 +221,7 @@ var Properties = {
   renderAll: function() {
     this._ensure();
     var props = this.getAll(); var rents = this.getRents(); var uf = MarketData.getUF();
+    var t = I18n.t.bind(I18n);
     var totalDebtUF = 0;
     props.forEach(function(p) {
       var rem = (p.totalInstallments || 0) - (p.paidInstallments || 0);
@@ -230,10 +234,10 @@ var Properties = {
     var netMonth   = monthsWithData > 0 ? netYear / monthsWithData : 0;
 
     document.getElementById('prop-kpis').innerHTML =
-      '<div class="card-sm"><div class="metric-label">Propiedades</div><div class="metric-val" style="font-size:18px">' + props.length + '</div></div>' +
-      '<div class="card-sm"><div class="metric-label">Deuda UF</div><div class="metric-val" style="color:var(--red);font-size:17px">' + Fmt.uf(totalDebtUF) + '</div><div style="font-size:11px;color:var(--muted)">' + Fmt.short(totalDebtUF * uf) + '</div></div>' +
-      '<div class="card-sm"><div class="metric-label">Flujo Neto Mes</div><div class="metric-val" style="color:' + (netMonth >= 0 ? 'var(--green)' : 'var(--red)') + ';font-size:17px">' + Fmt.clp(netMonth) + '</div></div>' +
-      '<div class="card-sm"><div class="metric-label">Flujo Neto Año</div><div class="metric-val" style="color:var(--amber);font-size:17px">' + Fmt.clp(netYear) + '</div></div>';
+      '<div class="card-sm"><div class="metric-label">' + t('properties.kpi.count') + '</div><div class="metric-val" style="font-size:18px">' + props.length + '</div></div>' +
+      '<div class="card-sm"><div class="metric-label">' + t('properties.kpi.debtUF') + '</div><div class="metric-val" style="color:var(--red);font-size:17px">' + Fmt.uf(totalDebtUF) + '</div><div style="font-size:11px;color:var(--muted)">' + Fmt.short(totalDebtUF * uf) + '</div></div>' +
+      '<div class="card-sm"><div class="metric-label">' + t('properties.kpi.netMonth') + '</div><div class="metric-val" style="color:' + (netMonth >= 0 ? 'var(--green)' : 'var(--red)') + ';font-size:17px">' + Fmt.clp(netMonth) + '</div></div>' +
+      '<div class="card-sm"><div class="metric-label">' + t('properties.kpi.netYear') + '</div><div class="metric-val" style="color:var(--amber);font-size:17px">' + Fmt.clp(netYear) + '</div></div>';
 
     var m2data = this.getM2();
     document.getElementById('prop-cards').innerHTML = props.map(function(p) {
@@ -251,24 +255,24 @@ var Properties = {
           '<div><span class="badge bb">' + (p.layout || '') + '</span>' + (p.sqm ? '<span class="badge bp" style="margin-left:4px">' + p.sqm + 'm²</span>' : '') + '</div>' +
         '</div>' +
         '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px">' +
-          '<div class="card-sm" style="padding:6px;text-align:center"><div style="font-size:9px;color:var(--muted)">DORMS</div><div style="font-weight:700">' + (p.bedrooms || '--') + '</div></div>' +
-          '<div class="card-sm" style="padding:6px;text-align:center"><div style="font-size:9px;color:var(--muted)">BAÑOS</div><div style="font-weight:700">' + (p.bathrooms || '--') + '</div></div>' +
-          '<div class="card-sm" style="padding:6px;text-align:center"><div style="font-size:9px;color:var(--muted)">ESTAC.</div><div style="font-weight:700;font-size:10px">' + (p.parking || '--') + '</div></div>' +
+          '<div class="card-sm" style="padding:6px;text-align:center"><div style="font-size:9px;color:var(--muted)">' + t('properties.card.beds') + '</div><div style="font-weight:700">' + (p.bedrooms || '--') + '</div></div>' +
+          '<div class="card-sm" style="padding:6px;text-align:center"><div style="font-size:9px;color:var(--muted)">' + t('properties.card.baths') + '</div><div style="font-weight:700">' + (p.bathrooms || '--') + '</div></div>' +
+          '<div class="card-sm" style="padding:6px;text-align:center"><div style="font-size:9px;color:var(--muted)">' + t('properties.card.parking') + '</div><div style="font-weight:700;font-size:10px">' + (p.parking || '--') + '</div></div>' +
         '</div>' +
-        '<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px"><span style="color:var(--muted)">Crédito</span><span>' + (p.paidInstallments || 0) + '/' + (p.totalInstallments || '?') + ' (' + progress.toFixed(0) + '%)</span></div><div class="pw"><div class="pf" style="width:' + progress.toFixed(0) + '%;background:var(--cyan)"></div></div></div>' +
+        '<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px"><span style="color:var(--muted)">' + t('properties.card.mortgage') + '</span><span>' + (p.paidInstallments || 0) + '/' + (p.totalInstallments || '?') + ' (' + progress.toFixed(0) + '%)</span></div><div class="pw"><div class="pf" style="width:' + progress.toFixed(0) + '%;background:var(--cyan)"></div></div></div>' +
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:11px;font-family:var(--mono);margin-bottom:8px">' +
-          '<div><span style="color:var(--muted)">Banco: </span>' + (p.bank || '--') + '</div>' +
-          '<div><span style="color:var(--muted)">Tasa: </span>' + (p.annualRate || '--') + '%</div>' +
-          '<div><span style="color:var(--muted)">Cuota: </span>' + Fmt.uf(p.ufFee) + '</div>' +
-          '<div><span style="color:var(--muted)">CLP: </span>' + (p.ufFee ? Fmt.clp(p.ufFee * uf) : '--') + '</div>' +
-          (debtUF ? '<div style="grid-column:1/-1"><span style="color:var(--muted)">Deuda est.: </span><span style="color:var(--red)">' + Fmt.uf(debtUF) + ' = ' + Fmt.clp(debtUF * uf) + '</span></div>' : '') +
-          (lm2 && p.sqm ? '<div style="grid-column:1/-1"><span style="color:var(--muted)">Plusvalía aprox: </span><span style="color:var(--green)">' + Fmt.clp(lm2.value * p.sqm) + '</span>' + (plus !== null ? ' <span style="color:' + (plus >= 0 ? 'var(--green)' : 'var(--red)') + '">' + Fmt.pct(plus) + '</span>' : '') + '</div>' : '') +
+          '<div><span style="color:var(--muted)">' + t('properties.card.bank') + ' </span>' + (p.bank || '--') + '</div>' +
+          '<div><span style="color:var(--muted)">' + t('properties.card.rate') + ' </span>' + (p.annualRate || '--') + '%</div>' +
+          '<div><span style="color:var(--muted)">' + t('properties.card.fee') + ' </span>' + Fmt.uf(p.ufFee) + '</div>' +
+          '<div><span style="color:var(--muted)">' + t('properties.card.clp') + ' </span>' + (p.ufFee ? Fmt.clp(p.ufFee * uf) : '--') + '</div>' +
+          (debtUF ? '<div style="grid-column:1/-1"><span style="color:var(--muted)">' + t('properties.card.estDebt') + ' </span><span style="color:var(--red)">' + Fmt.uf(debtUF) + ' = ' + Fmt.clp(debtUF * uf) + '</span></div>' : '') +
+          (lm2 && p.sqm ? '<div style="grid-column:1/-1"><span style="color:var(--muted)">' + t('properties.card.appreciation') + ' </span><span style="color:var(--green)">' + Fmt.clp(lm2.value * p.sqm) + '</span>' + (plus !== null ? ' <span style="color:' + (plus >= 0 ? 'var(--green)' : 'var(--red)') + '">' + Fmt.pct(plus) + '</span>' : '') + '</div>' : '') +
         '</div>' +
-        (pRents.length ? '<div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Últimos arriendos</div>' +
+        (pRents.length ? '<div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:4px">' + t('properties.card.recentRents') + '</div>' +
           pRents.map(function(r) { return '<div style="display:flex;justify-content:space-between;font-size:11px;font-family:var(--mono);padding:2px 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">' + r.month + '</span><span style="color:' + (r.net >= 0 ? 'var(--green)' : 'var(--red)') + '">' + Fmt.clp(r.net) + '</span></div>'; }).join('') : '') +
         (p.notes ? '<div style="font-size:11px;color:var(--muted);margin-top:8px">' + p.notes + '</div>' : '') +
         '<div style="display:flex;gap:6px;margin-top:10px">' +
-          '<button class="btn btn-ghost" style="padding:3px 8px;font-size:11px" onclick="Properties.openModal(\'' + p.id + '\')">Editar</button>' +
+          '<button class="btn btn-ghost" style="padding:3px 8px;font-size:11px" onclick="Properties.openModal(\'' + p.id + '\')">' + t('properties.card.edit') + '</button>' +
           '<button class="btn btn-red" style="padding:3px 8px;font-size:11px" onclick="Properties.delete(\'' + p.id + '\')">×</button>' +
         '</div>' +
         '</div>';
@@ -276,7 +280,7 @@ var Properties = {
 
     var sr = rents.slice().sort(function(a, b) { return new Date(b.month + '-01') - new Date(a.month + '-01'); });
     document.getElementById('prop-rents').innerHTML = sr.length ?
-      '<table><thead><tr><th>Propiedad</th><th>Mes</th><th>Arriendo</th><th>Ing. adicionales</th><th>Dividendo</th><th>Comisión</th><th>Otros gastos</th><th>Flujo Neto</th><th>Notas</th><th></th></tr></thead><tbody>' +
+      '<table><thead><tr><th>' + t('properties.rentTable.property') + '</th><th>' + t('properties.rentTable.month') + '</th><th>' + t('properties.rentTable.rent') + '</th><th>' + t('properties.rentTable.additionalIncome') + '</th><th>' + t('properties.rentTable.dividend') + '</th><th>' + t('properties.rentTable.commission') + '</th><th>' + t('properties.rentTable.otherExpenses') + '</th><th>' + t('properties.rentTable.netFlow') + '</th><th>' + t('properties.rentTable.notes') + '</th><th></th></tr></thead><tbody>' +
       sr.map(function(r) {
         return '<tr><td>' + (r.propertyName || r.propertyId) + '</td>' +
           '<td style="color:var(--muted)">' + r.month + '</td>' +
@@ -292,6 +296,6 @@ var Properties = {
             '<button class="btn btn-red" style="padding:2px 7px;font-size:10px" onclick="Properties.deleteRent(\'' + r.id + '\')">×</button>' +
           '</td></tr>';
       }).join('') + '</tbody></table>' :
-      '<p style="font-size:13px;color:var(--muted);padding:16px">Sin arriendos registrados</p>';
+      '<p style="font-size:13px;color:var(--muted);padding:16px">' + t('properties.rentTable.noRents') + '</p>';
   }
 };

@@ -5,7 +5,8 @@
 // ============================================================
 var App = {
   init: function() {
-    Debug.info('App.init() v1.2');
+    I18n.applyAll();
+    Debug.info('App.init() v1.2 [' + I18n.locale + ']');
     var today = new Date();
 
     // Default investments month to latest with data

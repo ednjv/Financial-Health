@@ -1,7 +1,7 @@
 'use strict';
 // ============================================================
 // INVESTMENTS FEATURE
-// Depends on: Store, SK, Debug, Fmt, Charts, MarketData
+// Depends on: Store, SK, Debug, Fmt, Charts, MarketData, I18n
 // ============================================================
 var Investments = {
   _defs: function() {
@@ -42,7 +42,9 @@ var Investments = {
   openSnapModal: function(id) {
     var snap = id ? this.getSnaps().filter(function(s) { return s.id === id; })[0] : null;
     var m = document.getElementById('inv-month').value || new Date().toISOString().slice(0, 7);
-    document.getElementById('snap-modal-title').textContent = snap ? 'Editar Snapshot' : 'Registrar Snapshot de Inversión';
+    document.getElementById('snap-modal-title').textContent = snap
+      ? I18n.t('investments.modal.titleEdit')
+      : I18n.t('investments.modal.titleAdd');
     document.getElementById('sn-id').value = snap ? snap.id : '';
     document.getElementById('sn-month').value = snap ? snap.month : m;
     document.getElementById('sn-invested').value = snap ? (snap.invested || '') : '';
@@ -71,11 +73,11 @@ var Investments = {
       var c = ret >= 0 ? 'var(--green)' : 'var(--red)';
       document.getElementById('sn-preview').innerHTML =
         '<div style="display:flex;gap:16px;font-family:var(--mono)">' +
-        '<div><div style="font-size:9px;color:var(--muted)">VARIACIÓN</div><div style="font-size:16px;color:' + c + '">' + Fmt.pct(ret) + '</div></div>' +
-        '<div><div style="font-size:9px;color:var(--muted)">DIFERENCIA</div><div style="font-size:16px;color:' + c + '">' + Fmt.short(diff) + '</div></div>' +
+        '<div><div style="font-size:9px;color:var(--muted)">' + I18n.t('investments.preview.variation') + '</div><div style="font-size:16px;color:' + c + '">' + Fmt.pct(ret) + '</div></div>' +
+        '<div><div style="font-size:9px;color:var(--muted)">' + I18n.t('investments.preview.diff') + '</div><div style="font-size:16px;color:' + c + '">' + Fmt.short(diff) + '</div></div>' +
         '</div>';
     } else {
-      document.getElementById('sn-preview').innerHTML = '<div style="font-size:12px;color:var(--muted)">Ingresa balances para ver rendimiento</div>';
+      document.getElementById('sn-preview').innerHTML = '<div style="font-size:12px;color:var(--muted)">' + I18n.t('investments.modal.previewEmpty') + '</div>';
     }
   },
 
@@ -129,7 +131,7 @@ var Investments = {
   },
 
   deleteFund: function(id) {
-    if (!confirm('Eliminar fondo?')) return;
+    if (!confirm(I18n.t('investments.confirm.deleteFund'))) return;
     var d = this._get(); d.funds = (d.funds || []).filter(function(f) { return f.id !== id; });
     this._save(d); this._renderFundList();
   },
@@ -137,7 +139,7 @@ var Investments = {
   renderAll: function() {
     var m = document.getElementById('inv-month').value || new Date().toISOString().slice(0, 7);
     var el = document.getElementById('inv-month-label');
-    var months = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    var months = I18n.months();
     var parts = m.split('-'); var label = parts[1] ? months[parseInt(parts[1]) - 1] + ' ' + parts[0] : m;
     if (el) el.textContent = label;
     this._renderKPIs(m); this._renderSnapTable(m); this._renderCharts();
@@ -154,24 +156,25 @@ var Investments = {
     var el = document.getElementById('inv-kpis'); if (!el) return;
     var rc = avgRet >= 0 ? 'var(--green)' : 'var(--red)';
     el.innerHTML =
-      '<div class="card-sm"><div class="metric-label">Portfolio (CLP)</div><div class="metric-val" style="color:var(--purple);font-size:17px">' + Fmt.short(totalCLP) + '</div></div>' +
-      '<div class="card-sm"><div class="metric-label">Retorno Promedio</div><div class="metric-val" style="color:' + rc + ';font-size:17px">' + Fmt.pct(avgRet) + '</div></div>' +
-      '<div class="card-sm"><div class="metric-label">Invertido mes</div><div class="metric-val" style="color:var(--amber);font-size:17px">' + Fmt.short(totalInv) + '</div></div>' +
-      '<div class="card-sm"><div class="metric-label">Fondos activos</div><div class="metric-val" style="font-size:17px">' + snaps.length + '</div></div>';
+      '<div class="card-sm"><div class="metric-label">' + I18n.t('investments.kpi.portfolio') + '</div><div class="metric-val" style="color:var(--purple);font-size:17px">' + Fmt.short(totalCLP) + '</div></div>' +
+      '<div class="card-sm"><div class="metric-label">' + I18n.t('investments.kpi.avgReturn') + '</div><div class="metric-val" style="color:' + rc + ';font-size:17px">' + Fmt.pct(avgRet) + '</div></div>' +
+      '<div class="card-sm"><div class="metric-label">' + I18n.t('investments.kpi.invested') + '</div><div class="metric-val" style="color:var(--amber);font-size:17px">' + Fmt.short(totalInv) + '</div></div>' +
+      '<div class="card-sm"><div class="metric-label">' + I18n.t('investments.kpi.activeFunds') + '</div><div class="metric-val" style="font-size:17px">' + snaps.length + '</div></div>';
   },
 
   _renderSnapTable: function(month) {
     var snaps = this.getSnaps().filter(function(s) { return s.month === month; });
     var el = document.getElementById('inv-snap-table'); if (!el) return;
     if (!snaps.length) {
-      el.innerHTML = '<div style="padding:20px;text-align:center"><p style="font-size:13px;color:var(--muted)">Sin snapshots para ' + month + '.</p><p style="font-size:12px;color:var(--muted);margin-top:6px">Usa ◀ ▶ para navegar o + Snapshot para agregar.</p></div>';
+      el.innerHTML = '<div style="padding:20px;text-align:center"><p style="font-size:13px;color:var(--muted)">' + I18n.t('investments.empty.noSnaps', {month: month}) + '</p><p style="font-size:12px;color:var(--muted);margin-top:6px">' + I18n.t('investments.empty.hint') + '</p></div>';
       document.getElementById('inv-suggest').innerHTML = '';
       return;
     }
     var usd = MarketData.getUSD(); var totalCLP = 0;
     snaps.forEach(function(s) { totalCLP += s.currency === 'USD' ? s.currBalance * usd : s.currBalance; });
     snaps.sort(function(a, b) { return b.currBalance - a.currBalance; });
-    el.innerHTML = '<table><thead><tr><th>Fondo</th><th>Moneda</th><th>Anterior</th><th>Actual</th><th>Retorno</th><th>CLP equiv.</th><th>% Port.</th><th>Invertido</th><th></th></tr></thead><tbody>' +
+    var t = I18n.t.bind(I18n);
+    el.innerHTML = '<table><thead><tr><th>' + t('investments.table.fund') + '</th><th>' + t('investments.table.currency') + '</th><th>' + t('investments.table.prev') + '</th><th>' + t('investments.table.curr') + '</th><th>' + t('investments.table.return') + '</th><th>' + t('investments.table.clpEquiv') + '</th><th>' + t('investments.table.portPct') + '</th><th>' + t('investments.table.invested') + '</th><th></th></tr></thead><tbody>' +
       snaps.map(function(s) {
         var clp = s.currency === 'USD' ? s.currBalance * usd : s.currBalance;
         var pct = totalCLP ? clp / totalCLP * 100 : 0;
@@ -192,10 +195,7 @@ var Investments = {
     this._renderSuggest(snaps, totalCLP, usd, month);
   },
 
-  // Suggestion formula:
-  // Left to invest = savingsBudget - totalInvestedThisMonth
-  // Distribute proportionally among CLP-denominated funds only
-  _renderSuggest: function(snaps, totalCLP, usd, month) {
+  _renderSuggest: function(snaps, _totalCLP, _usd, month) {
     var el = document.getElementById('inv-suggest'); if (!el) return;
     var cfg = Store.get(SK.config, {}); var salary = parseFloat(cfg.salary) || 0;
     var savPct = 100 - parseFloat(cfg.pctNeeds || 50) - parseFloat(cfg.pctWants || 10);
@@ -209,12 +209,13 @@ var Investments = {
       investedThisMonth = parseFloat(mStats.investedTotal) || 0;
       savingsTarget = (parseFloat(mStats.salary || salary) * savPct / 100);
     } else {
-      if (!salary) { el.innerHTML = '<p style="font-size:12px;color:var(--muted)">Configure salario en Ajustes para ver sugerencias.</p>'; return; }
+      if (!salary) { el.innerHTML = '<p style="font-size:12px;color:var(--muted)">' + I18n.t('investments.suggest.configSalary') + '</p>'; return; }
       savingsTarget = salary * savPct / 100;
       investedThisMonth = snaps.reduce(function(s, x) { return s + (x.invested || 0); }, 0);
       leftToInvest = savingsTarget - investedThisMonth;
     }
 
+    var t = I18n.t.bind(I18n);
     var clpSnaps = snaps.filter(function(s) { return s.currency === 'CLP'; });
     var totalCLPFunds = clpSnaps.reduce(function(s, x) { return s + x.currBalance; }, 0);
     var c = leftToInvest >= 0 ? 'var(--green)' : 'var(--red)';
@@ -229,20 +230,20 @@ var Investments = {
 
     el.innerHTML = '<div style="background:rgba(139,92,246,.05);border:1px solid rgba(139,92,246,.2);border-radius:8px;padding:14px">' +
       '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">' +
-        '<div style="font-size:12px;font-weight:700;color:var(--purple)">Sugerencia de Inversión</div>' +
+        '<div style="font-size:12px;font-weight:700;color:var(--purple)">' + t('investments.suggest.title') + '</div>' +
         '<div style="font-family:var(--mono);font-size:12px">' +
-          'Meta ahorro: <span style="color:var(--cyan)">' + Fmt.clp(savingsTarget) + '</span>&nbsp;&nbsp;' +
-          'Invertido: <span style="color:var(--amber)">' + Fmt.clp(investedThisMonth) + '</span>&nbsp;&nbsp;' +
-          'Disponible: <span style="color:' + c + ';font-weight:700">' + Fmt.clp(leftToInvest) + '</span>' +
+          t('investments.suggest.savingsTarget') + ' <span style="color:var(--cyan)">' + Fmt.clp(savingsTarget) + '</span>&nbsp;&nbsp;' +
+          t('investments.suggest.invested') + ' <span style="color:var(--amber)">' + Fmt.clp(investedThisMonth) + '</span>&nbsp;&nbsp;' +
+          t('investments.suggest.available') + ' <span style="color:' + c + ';font-weight:700">' + Fmt.clp(leftToInvest) + '</span>' +
         '</div>' +
       '</div>' +
-      (rows ? '<table><thead><tr><th>Fondo CLP</th><th>Peso actual</th><th>Sugerir invertir</th></tr></thead><tbody>' + rows + '</tbody></table>' :
-        '<p style="font-size:12px;color:var(--muted)">No hay fondos CLP en este mes para calcular sugerencia.</p>') +
+      (rows ? '<table><thead><tr><th>' + t('investments.suggest.tableClpFund') + '</th><th>' + t('investments.suggest.tableWeight') + '</th><th>' + t('investments.suggest.tableSuggest') + '</th></tr></thead><tbody>' + rows + '</tbody></table>' :
+        '<p style="font-size:12px;color:var(--muted)">' + t('investments.suggest.noClpFunds') + '</p>') +
       '</div>';
   },
 
   deleteSnap: function(id) {
-    if (!confirm('Eliminar snapshot?')) return;
+    if (!confirm(I18n.t('investments.confirm.deleteSnap'))) return;
     var d = this._get(); d.snapshots = (d.snapshots || []).filter(function(s) { return s.id !== id; });
     this._save(d); this.renderAll();
   },
