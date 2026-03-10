@@ -229,7 +229,7 @@ var EmergencyFunds = {
     
     var data = this._get();
     var fund = {
-      id: id || this._generateId(),
+      id: id || uid(),
       name: name,
       description: desc,
       notes: notes,
@@ -263,29 +263,11 @@ var EmergencyFunds = {
     this.renderAll();
   },
 
-  _generateId: function() {
-    return 'emf_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-  },
-
   // ========== RENDERING ==========
 
   renderAll: function() {
-    if (!document.getElementById('view-emergency')) return;
-    
     this.renderKPIs();
     this.renderFunds();
-    
-    // Attach event listeners
-    var self = this;
-    document.querySelectorAll('[data-emf-goal-type]').forEach(function(el) {
-      el.addEventListener('change', function() { self._updatePreview(); });
-    });
-    document.querySelectorAll('[data-emf-goal-value]').forEach(function(el) {
-      el.addEventListener('input', function() { self._updatePreview(); });
-    });
-    document.querySelectorAll('[data-emf-investment]').forEach(function(el) {
-      el.addEventListener('change', function() { self._updatePreview(); });
-    });
   },
 
   renderKPIs: function() {
@@ -311,15 +293,12 @@ var EmergencyFunds = {
     if (fundCount > 0) avgProgress = avgProgress / fundCount;
     var totalShortfall = Math.max(0, totalGoal - totalBalance);
     
-    var kpiHTML =
-      '<div class="g4" style="margin-bottom:24px">' +
+    var el = document.getElementById('emf-kpis'); if (!el) return;
+    el.innerHTML =
       '<div class="card-sm"><div class="metric-label">Meta Total</div><div class="metric-val">' + Fmt.short(totalGoal) + '</div></div>' +
       '<div class="card-sm"><div class="metric-label">Balance Total</div><div class="metric-val" style="color:var(--green)">' + Fmt.short(totalBalance) + '</div></div>' +
       '<div class="card-sm"><div class="metric-label">Faltante</div><div class="metric-val" style="color:var(--amber)">' + Fmt.short(totalShortfall) + '</div></div>' +
-      '<div class="card-sm"><div class="metric-label">Avance Promedio</div><div class="metric-val" style="color:' + (avgProgress >= 100 ? 'var(--green)' : 'var(--cyan)') + '">' + Fmt.pct(avgProgress) + '</div></div>' +
-      '</div>';    
-    var kpiContainer = document.getElementById('emf-kpis');
-    if (kpiContainer) kpiContainer.innerHTML = kpiHTML;
+      '<div class="card-sm"><div class="metric-label">Avance Promedio</div><div class="metric-val" style="color:' + (avgProgress >= 100 ? 'var(--green)' : 'var(--cyan)') + '">' + Fmt.pct(avgProgress) + '</div></div>';
   },
 
   renderFunds: function() {
@@ -336,7 +315,7 @@ var EmergencyFunds = {
              '</div>';
     } else {
       var self = this;
-    html = funds.map(function(fund) {
+      html = funds.map(function(fund) {
         var goal = EmergencyFunds.calculateGoalAmount(fund, salary, monthlyDividends);
         var balance = EmergencyFunds.calculateCurrentBalance(fund.investmentId);
         var progress = EmergencyFunds.calculateProgress(balance, goal);
@@ -355,13 +334,13 @@ var EmergencyFunds = {
           goalLabel = Fmt.short(fund.goalValue) + ' fijo';
         }
         
-        return '<div class="card" style="margin-bottom:16px;padding:20px">' +
+        return '<div class="card" style="margin-bottom:14px">' +
                '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">' +
                '<div>' +
-               '<div style="font-weight:600;font-size:16px">' + fund.name + '</div>' +
-               '<div style="color:var(--muted);font-size:12px;margin-top:4px">' + fund.description + '</div>' +
-               '<div style="color:var(--muted);font-size:11px;margin-top:8px">📊 ' + invName + ' • ' + goalLabel + '</div>' +
-               (fund.notes ? '<div style="color:var(--muted);font-size:11px;margin-top:4px;font-style:italic">🗒️ ' + fund.notes + '</div>' : '') +
+               '<div style="font-weight:700;font-size:15px">' + fund.name + '</div>' +
+               '<div style="color:var(--muted);font-size:11px;margin-top:4px">' + fund.description + '</div>' +
+               '<div style="color:var(--muted);font-size:11px;margin-top:6px">' + invName + ' · ' + goalLabel + '</div>' +
+               (fund.notes ? '<div style="color:var(--muted);font-size:11px;margin-top:4px;font-style:italic">' + fund.notes + '</div>' : '') +
                '</div>' +
                '<div style="display:flex;gap:6px">' +
                '<button class="btn btn-ghost" style="padding:3px 8px;font-size:11px" onclick="EmergencyFunds.openEditModal(\'' + fund.id + '\')">Editar</button>' +
@@ -392,9 +371,8 @@ var EmergencyFunds = {
   },
 
   _renderProgressBar: function(percentage) {
-    var safePercentage = Math.max(5, Math.min(100, percentage));
-    var color = safePercentage >= 100 ? 'var(--green)' : 'var(--cyan)';
-    
-    return '<div class="pw" style="width:100%"><div class="pf" style="width:' + safePercentage + '%;background:' + color + '"></div></div>';
+    var pct = Math.min(100, percentage).toFixed(0);
+    var color = percentage >= 100 ? 'var(--green)' : 'var(--cyan)';
+    return '<div class="pw"><div class="pf" style="width:' + pct + '%;background:' + color + '"></div></div>';
   }
 };
