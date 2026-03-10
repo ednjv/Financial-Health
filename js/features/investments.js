@@ -155,8 +155,10 @@ var Investments = {
     var avgRet = snaps.length ? totalRet / snaps.length : 0;
     var el = document.getElementById('inv-kpis'); if (!el) return;
     var rc = avgRet >= 0 ? 'var(--green)' : 'var(--red)';
+    var primaryCur = MarketData.getPrimaryCurrency();
+    var portfolioLabel = I18n.t('investments.kpi.portfolio') + ' (' + primaryCur + ')';
     el.innerHTML =
-      '<div class="card-sm"><div class="metric-label">' + I18n.t('investments.kpi.portfolio') + '</div><div class="metric-val" style="color:var(--purple);font-size:17px">' + Fmt.short(totalCLP) + '</div></div>' +
+      '<div class="card-sm"><div class="metric-label">' + portfolioLabel + '</div><div class="metric-val" style="color:var(--purple);font-size:17px">' + MarketData.formatShortPrimary(totalCLP) + '</div></div>' +
       '<div class="card-sm"><div class="metric-label">' + I18n.t('investments.kpi.avgReturn') + '</div><div class="metric-val" style="color:' + rc + ';font-size:17px">' + Fmt.pct(avgRet) + '</div></div>' +
       '<div class="card-sm"><div class="metric-label">' + I18n.t('investments.kpi.invested') + '</div><div class="metric-val" style="color:var(--amber);font-size:17px">' + Fmt.short(totalInv) + '</div></div>' +
       '<div class="card-sm"><div class="metric-label">' + I18n.t('investments.kpi.activeFunds') + '</div><div class="metric-val" style="font-size:17px">' + snaps.length + '</div></div>';

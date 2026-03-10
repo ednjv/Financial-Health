@@ -235,9 +235,9 @@ var Properties = {
 
     document.getElementById('prop-kpis').innerHTML =
       '<div class="card-sm"><div class="metric-label">' + t('properties.kpi.count') + '</div><div class="metric-val" style="font-size:18px">' + props.length + '</div></div>' +
-      '<div class="card-sm"><div class="metric-label">' + t('properties.kpi.debtUF') + '</div><div class="metric-val" style="color:var(--red);font-size:17px">' + Fmt.uf(totalDebtUF) + '</div><div style="font-size:11px;color:var(--muted)">' + Fmt.short(totalDebtUF * uf) + '</div></div>' +
-      '<div class="card-sm"><div class="metric-label">' + t('properties.kpi.netMonth') + '</div><div class="metric-val" style="color:' + (netMonth >= 0 ? 'var(--green)' : 'var(--red)') + ';font-size:17px">' + Fmt.clp(netMonth) + '</div></div>' +
-      '<div class="card-sm"><div class="metric-label">' + t('properties.kpi.netYear') + '</div><div class="metric-val" style="color:var(--amber);font-size:17px">' + Fmt.clp(netYear) + '</div></div>';
+      '<div class="card-sm"><div class="metric-label">' + t('properties.kpi.debtUF') + '</div><div class="metric-val" style="color:var(--red);font-size:17px">' + Fmt.uf(totalDebtUF) + '</div><div style="font-size:11px;color:var(--muted)">' + MarketData.formatShortPrimary(totalDebtUF * uf) + '</div></div>' +
+      '<div class="card-sm"><div class="metric-label">' + t('properties.kpi.netMonth') + '</div><div class="metric-val" style="color:' + (netMonth >= 0 ? 'var(--green)' : 'var(--red)') + ';font-size:17px">' + MarketData.formatPrimary(netMonth) + '</div></div>' +
+      '<div class="card-sm"><div class="metric-label">' + t('properties.kpi.netYear') + '</div><div class="metric-val" style="color:var(--amber);font-size:17px">' + MarketData.formatPrimary(netYear) + '</div></div>';
 
     var m2data = this.getM2();
     document.getElementById('prop-cards').innerHTML = props.map(function(p) {

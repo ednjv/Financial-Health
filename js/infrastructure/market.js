@@ -97,5 +97,35 @@ var MarketData = {
     if (cached.rates && cached.rates[currency] != null) return cached.rates[currency];
     // Last resort: USD
     return this.getUSD();
+  },
+
+  // Returns the user-configured primary display currency (defaults to CLP).
+  getPrimaryCurrency: function() {
+    return Store.get(SK.config, {}).primaryCurrency || 'CLP';
+  },
+
+  // Convert a CLP amount to the primary currency and format it.
+  formatPrimary: function(clpValue) {
+    if (clpValue == null) return '--';
+    var cur = this.getPrimaryCurrency();
+    if (cur === 'CLP') return Fmt.clp(clpValue);
+    return Fmt.foreign(clpValue / this.getRate(cur), cur);
+  },
+
+  // Like Fmt.short but in the primary currency.
+  formatShortPrimary: function(clpValue) {
+    if (clpValue == null) return '--';
+    var cur = this.getPrimaryCurrency();
+    if (cur === 'CLP') return Fmt.short(clpValue);
+    var converted = clpValue / this.getRate(cur);
+    var sym = cur;
+    for (var i = 0; i < CURRENCIES.length; i++) {
+      if (CURRENCIES[i].code === cur) { sym = CURRENCIES[i].symbol; break; }
+    }
+    var a = Math.abs(converted);
+    if (a >= 1e9) return sym + (converted / 1e9).toFixed(1) + 'B';
+    if (a >= 1e6) return sym + (converted / 1e6).toFixed(1) + 'M';
+    if (a >= 1e3) return sym + (converted / 1e3).toFixed(0) + 'K';
+    return sym + Math.round(converted);
   }
 };
