@@ -9,6 +9,11 @@ var App = {
     Debug.info('App.init() v1.2 [' + I18n.locale + ']');
     var today = new Date();
 
+    // Attach custom month pickers (before setting values so interceptor is ready)
+    ['inv-month', 'sn-month', 'rn-month', 'm2-month'].forEach(function(id) {
+      MonthPicker.attach(id);
+    });
+
     // Default investments month to latest with data
     var latestMonth = Investments._latestMonth();
     var inv = document.getElementById('inv-month');

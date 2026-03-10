@@ -380,7 +380,8 @@ var I18n = {
       else if (view === 'emergency'   && typeof EmergencyFunds !== 'undefined') EmergencyFunds.renderAll();
       else if (view === 'settings'    && typeof Settings       !== 'undefined') Settings.load();
     }
-    if (typeof MarketData !== 'undefined') MarketData._render();
+    if (typeof MarketData    !== 'undefined') MarketData._render();
+    if (typeof MonthPicker   !== 'undefined') MonthPicker.refreshAll();
   },
 
   toggle: function() { this.setLocale(this.locale === 'es' ? 'en' : 'es'); },
