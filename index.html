@@ -210,12 +210,18 @@
   <div class="fg"><label class="fl">Inversión base</label><select id="emf-investment" class="inp" data-emf-investment onchange="EmergencyFunds._updatePreview()"></select></div>
   <div class="divider"></div>
   <div style="font-size:12px;font-weight:700;color:var(--cyan);margin-bottom:10px">Tipo de Meta</div>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">
-    <label style="display:flex;align-items:center;cursor:pointer"><input type="radio" name="emf-goal-type" value="salary_months" data-emf-goal-type onchange="EmergencyFunds._updatePreview()" checked style="margin-right:6px"><span style="font-size:12px">Meses de sueldo</span></label>
-    <label style="display:flex;align-items:center;cursor:pointer"><input type="radio" name="emf-goal-type" value="dividend_months" data-emf-goal-type onchange="EmergencyFunds._updatePreview()" style="margin-right:6px"><span style="font-size:12px">Meses de dividendos</span></label>
-    <label style="display:flex;align-items:center;cursor:pointer"><input type="radio" name="emf-goal-type" value="fixed_amount" data-emf-goal-type onchange="EmergencyFunds._updatePreview()" style="margin-right:6px"><span style="font-size:12px">Monto fijo (CLP)</span></label>
-  </div>
-  <div class="fg"><label class="fl">Valor de la meta</label><input type="number" id="emf-goal-value" class="inp" placeholder="Ej: 6 (meses) o 500000 (monto)" data-emf-goal-value onchange="EmergencyFunds._updatePreview()" oninput="EmergencyFunds._updatePreview()"></div>
+  <div class="fg"><select id="emf-goal-type" class="inp" onchange="EmergencyFunds._onGoalTypeChange()">
+    <option value="param_months">Meses × parámetros</option>
+    <option value="dividend_months">Meses de dividendos</option>
+    <option value="fixed_amount">Monto fijo (CLP)</option>
+  </select></div>
+  <div id="emf-basis-row" style="display:none" class="fg"><label class="fl">Categoría base</label><select id="emf-goal-basis" class="inp" onchange="EmergencyFunds._onGoalTypeChange()">
+    <option value="needs">% Necesidades</option>
+    <option value="wants">% Deseos</option>
+    <option value="salary">Sueldo completo</option>
+  </select></div>
+  <div id="emf-needs-info" style="display:none;padding:8px 12px;margin-bottom:10px;border-left:3px solid var(--cyan);border-radius:4px;font-size:12px;font-family:var(--mono);color:var(--muted)"></div>
+  <div class="fg"><label class="fl" id="emf-goal-value-label">Número de meses</label><input type="number" id="emf-goal-value" class="inp" placeholder="Ej: 6" data-emf-goal-value onchange="EmergencyFunds._updatePreview()" oninput="EmergencyFunds._updatePreview()"></div>
   <div class="fg"><label class="fl">Notas (opcional)</label><input type="text" id="emf-notes" class="inp" placeholder="Tipo de emergencia, observaciones..."></div>
   <div class="card-sm" style="margin-bottom:14px" id="emf-preview"><div style="font-size:12px;color:var(--muted)">Completa los campos para ver preview</div></div>
   <div style="display:flex;gap:8px"><button class="btn btn-cyan" onclick="EmergencyFunds.saveFund()">Guardar</button><button class="btn btn-ghost" onclick="EmergencyFunds.closeModal()">Cancelar</button></div>

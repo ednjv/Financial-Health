@@ -36,8 +36,18 @@ var EmergencyFunds = {
     if (!fund) return 0;
     
     switch(fund.goalType) {
-      case 'salary_months':
-        return (salary || 0) * (fund.goalValue || 0);
+      case 'param_months': {
+        var cfg = Store.get(SK.config, {}) || {};
+        var base;
+        if (fund.goalBasis === 'wants') base = (salary || 0) * ((cfg.pctWants || 10) / 100);
+        else if (fund.goalBasis === 'salary') base = (salary || 0);
+        else base = (salary || 0) * ((cfg.pctNeeds || 50) / 100); // default: needs
+        return base * (fund.goalValue || 0);
+      }
+      case 'salary_months': { // legacy
+        var pctNeedsLegacy = ((Store.get(SK.config, {}) || {}).pctNeeds) || 50;
+        return (salary || 0) * (pctNeedsLegacy / 100) * (fund.goalValue || 0);
+      }
       case 'dividend_months':
         return (monthlyDividends || 0) * (fund.goalValue || 0);
       case 'fixed_amount':
@@ -127,13 +137,14 @@ var EmergencyFunds = {
     document.getElementById('emf-name').value = '';
     document.getElementById('emf-desc').value = '';
     document.getElementById('emf-notes').value = '';
-    document.querySelector('input[name="emf-goal-type"][value="salary_months"]').checked = true;
+    document.getElementById('emf-goal-type').value = 'param_months';
+    document.getElementById('emf-goal-basis').value = 'needs';
     document.getElementById('emf-goal-value').value = '';
     document.getElementById('emf-investment').value = '';
-    
+
     document.getElementById('emf-modal-title').textContent = 'Crear Fondo de Emergencia';
     this._populateInvestmentsList();
-    this._updatePreview();
+    this._onGoalTypeChange();
     openModal('m-emergency-fund');
   },
 
@@ -148,15 +159,16 @@ var EmergencyFunds = {
     document.getElementById('emf-desc').value = fund.description || '';
     document.getElementById('emf-notes').value = fund.notes || '';
     
-    // Set radio button
-    var goalType = fund.goalType || 'salary_months';
-    document.querySelector('input[name="emf-goal-type"][value="' + goalType + '"]').checked = true;
-    
+    // Legacy salary_months maps to param_months with needs basis
+    var goalType = fund.goalType === 'salary_months' ? 'param_months' : (fund.goalType || 'param_months');
+    document.getElementById('emf-goal-type').value = goalType;
+    document.getElementById('emf-goal-basis').value = fund.goalBasis || (fund.goalType === 'salary_months' ? 'needs' : 'needs');
+
     document.getElementById('emf-goal-value').value = fund.goalValue || '';
     document.getElementById('emf-investment').value = fund.investmentId || '';
-    
+
     document.getElementById('emf-modal-title').textContent = 'Editar Fondo de Emergencia';
-    this._updatePreview();
+    this._onGoalTypeChange();
     openModal('m-emergency-fund');
   },
 
@@ -173,17 +185,63 @@ var EmergencyFunds = {
       }).join('');
   },
 
+  _onGoalTypeChange: function() {
+    var goalType = document.getElementById('emf-goal-type').value;
+    var infoEl = document.getElementById('emf-needs-info');
+    var basisRow = document.getElementById('emf-basis-row');
+    var goalLbl = document.getElementById('emf-goal-value-label');
+    var goalInput = document.getElementById('emf-goal-value');
+
+    if (goalType === 'param_months') {
+      basisRow.style.display = '';
+      if (goalLbl) goalLbl.textContent = 'Número de meses';
+      if (goalInput) goalInput.placeholder = 'Ej: 6';
+      var basis = document.getElementById('emf-goal-basis').value;
+      var cfg = Store.get(SK.config, {}) || {};
+      var pctNeeds = cfg.pctNeeds || 50;
+      var pctWants = cfg.pctWants || 10;
+      var salary = cfg.salary || 0;
+      var baseAmount, basisLabel;
+      if (basis === 'wants') {
+        baseAmount = salary * pctWants / 100;
+        basisLabel = pctWants + '% Deseos';
+      } else if (basis === 'salary') {
+        baseAmount = salary;
+        basisLabel = '100% Sueldo completo';
+      } else {
+        baseAmount = salary * pctNeeds / 100;
+        basisLabel = pctNeeds + '% Necesidades';
+      }
+      infoEl.innerHTML = 'Base: <strong style="color:var(--cyan)">' + basisLabel + '</strong>' +
+        ' &nbsp;·&nbsp; <strong style="color:var(--green)">' + Fmt.clp(baseAmount) + '</strong>/mes' +
+        '<div style="font-size:10px;margin-top:3px;opacity:0.7">Parámetros configurables en Ajustes</div>';
+      infoEl.style.display = 'block';
+    } else if (goalType === 'dividend_months') {
+      basisRow.style.display = 'none';
+      infoEl.style.display = 'none';
+      if (goalLbl) goalLbl.textContent = 'Número de meses';
+      if (goalInput) goalInput.placeholder = 'Ej: 6';
+    } else {
+      basisRow.style.display = 'none';
+      infoEl.style.display = 'none';
+      if (goalLbl) goalLbl.textContent = 'Monto (CLP)';
+      if (goalInput) goalInput.placeholder = 'Ej: 5000000';
+    }
+    this._updatePreview();
+  },
+
   _updatePreview: function() {
-    var goalType = document.querySelector('input[name="emf-goal-type"]:checked').value;
+    var goalType = document.getElementById('emf-goal-type').value;
     var goalValue = parseFloat(document.getElementById('emf-goal-value').value) || 0;
+    var goalBasis = document.getElementById('emf-goal-basis') ? document.getElementById('emf-goal-basis').value : 'needs';
     var investmentId = document.getElementById('emf-investment').value;
-    
+
     var salary = (Store.get(SK.config, {}) || {}).salary || 0;
     var monthlyDividends = this.getMonthlyDividends();
     var currentBalance = this.calculateCurrentBalance(investmentId);
     
     var goal = this.calculateGoalAmount(
-      { goalType: goalType, goalValue: goalValue },
+      { goalType: goalType, goalValue: goalValue, goalBasis: goalBasis },
       salary,
       monthlyDividends
     );
@@ -209,10 +267,11 @@ var EmergencyFunds = {
     var name = document.getElementById('emf-name').value || '';
     var desc = document.getElementById('emf-desc').value || '';
     var notes = document.getElementById('emf-notes').value || '';
-    var goalType = document.querySelector('input[name="emf-goal-type"]:checked').value;
+    var goalType = document.getElementById('emf-goal-type').value;
+    var goalBasis = document.getElementById('emf-goal-basis').value;
     var goalValue = parseFloat(document.getElementById('emf-goal-value').value) || 0;
     var investmentId = document.getElementById('emf-investment').value;
-    
+
     // Validations
     if (!name.trim()) {
       Debug.warn('El nombre del fondo es requerido');
@@ -234,6 +293,7 @@ var EmergencyFunds = {
       description: desc,
       notes: notes,
       goalType: goalType,
+      goalBasis: goalType === 'param_months' ? goalBasis : undefined,
       goalValue: goalValue,
       investmentId: investmentId,
       createdAt: id ? (this.getFunds().filter(function(f) { return f.id === id; })[0] || {}).createdAt : new Date().toISOString()
@@ -326,8 +386,12 @@ var EmergencyFunds = {
         invName = invName ? invName.name : 'Inversión desconocida';
         
         var goalLabel = '';
-        if (fund.goalType === 'salary_months') {
-          goalLabel = fund.goalValue + ' meses de sueldo';
+        if (fund.goalType === 'param_months') {
+          var basisNames = { needs: '% necesidades', wants: '% deseos', salary: 'sueldo completo' };
+          goalLabel = fund.goalValue + ' meses × ' + (basisNames[fund.goalBasis] || '% necesidades');
+        } else if (fund.goalType === 'salary_months') { // legacy
+          var pctNeedsLbl = ((Store.get(SK.config, {}) || {}).pctNeeds) || 50;
+          goalLabel = fund.goalValue + ' meses × ' + pctNeedsLbl + '% necesidades';
         } else if (fund.goalType === 'dividend_months') {
           goalLabel = fund.goalValue + ' meses de dividendos';
         } else if (fund.goalType === 'fixed_amount') {
