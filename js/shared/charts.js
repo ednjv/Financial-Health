@@ -24,12 +24,12 @@ var Charts = {
           titleColor:'#edf2f7', bodyColor:'#94a3b8',
           titleFont:{family:"'Inter',sans-serif", weight:'700', size:11},
           bodyFont:{family:"'JetBrains Mono',monospace", size:10},
-          callbacks: {label: function(c) { return isPie ? ' ' + Fmt.clp(c.raw) : ' ' + c.dataset.label + ': ' + Fmt.clp(c.raw); }}
+          callbacks: {label: function(c) { return isPie ? ' ' + MarketData.formatShortPrimary(c.raw) : ' ' + c.dataset.label + ': ' + MarketData.formatShortPrimary(c.raw); }}
         }
       },
       scales: isPie ? {} : {
         x: {grid:{color:'rgba(255,255,255,0.04)'}, ticks:{color:'#64748b', font:{family:"'JetBrains Mono',monospace", size:9}}},
-        y: {grid:{color:'rgba(255,255,255,0.04)'}, ticks:{color:'#64748b', font:{family:"'JetBrains Mono',monospace", size:9}, callback:function(v){return Fmt.short(v);}}}
+        y: {grid:{color:'rgba(255,255,255,0.04)'}, ticks:{color:'#64748b', font:{family:"'JetBrains Mono',monospace", size:9}, callback:function(v){return MarketData.formatShortPrimary(v);}}}
       }
     };
     if (opts) {
