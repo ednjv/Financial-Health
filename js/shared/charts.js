@@ -24,7 +24,7 @@ var Charts = {
           titleColor:'#edf2f7', bodyColor:'#94a3b8',
           titleFont:{family:"'Inter',sans-serif", weight:'700', size:11},
           bodyFont:{family:"'JetBrains Mono',monospace", size:10},
-          callbacks: {label: function(c) { return ' ' + Fmt.clp(c.raw); }}
+          callbacks: {label: function(c) { return isPie ? ' ' + Fmt.clp(c.raw) : ' ' + c.dataset.label + ': ' + Fmt.clp(c.raw); }}
         }
       },
       scales: isPie ? {} : {
@@ -34,9 +34,10 @@ var Charts = {
     };
     if (opts) {
       if (opts.indexAxis)  baseOpts.indexAxis = opts.indexAxis;
+      if (opts.legend)     baseOpts.plugins.legend.display = true;
       if (opts.legendRight) { baseOpts.plugins.legend.display = true; baseOpts.plugins.legend.position = 'right'; }
       if (opts.noLegend)   baseOpts.plugins.legend.display = false;
-      if (opts.pct)        baseOpts.plugins.tooltip.callbacks.label = function(c) { return ' ' + (c.raw != null ? c.raw.toFixed(2) + '%' : '--'); };
+      if (opts.pct)        baseOpts.plugins.tooltip.callbacks.label = function(c) { return ' ' + c.dataset.label + ': ' + (c.raw != null ? c.raw.toFixed(2) + '%' : '--'); };
     }
     this._inst[id] = new Chart(ctx, {type:type, data:{labels:labels, datasets:datasets}, options:baseOpts});
     return this._inst[id];

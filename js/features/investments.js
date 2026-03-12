@@ -264,12 +264,12 @@ var Investments = {
         pointBackgroundColor:Charts.C[i % Charts.C.length], tension:0.3, borderWidth:2, pointRadius:3,
         data:months.map(function(m) { var s = snaps.filter(function(sn) { return sn.month === m && sn.fundName === f; })[0]; return s ? (s.currBalance || 0) * MarketData.getRate(s.currency) : null; })};
     });
-    Charts.create('ch-inv-hist', 'line', months, histDS, {});
+    Charts.create('ch-inv-hist', 'line', months, histDS, {legend:true});
     var retDS = funds.map(function(f, i) {
       return {label:f, borderColor:Charts.C[i % Charts.C.length], backgroundColor:'transparent',
         pointBackgroundColor:Charts.C[i % Charts.C.length], tension:0.3, borderWidth:2, pointRadius:3,
         data:months.map(function(m) { var s = snaps.filter(function(sn) { return sn.month === m && sn.fundName === f; })[0]; return s ? s.returnPct : null; })};
     });
-    Charts.create('ch-inv-ret', 'line', months, retDS, {pct:true});
+    Charts.create('ch-inv-ret', 'line', months, retDS, {pct:true, legend:true});
   }
 };
