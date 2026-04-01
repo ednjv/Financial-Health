@@ -41,15 +41,15 @@ var Investments = {
 
   prevMonth: function() {
     var m = document.getElementById('inv-month').value || new Date().toISOString().slice(0, 7);
-    var d = new Date(m + '-01'); d.setMonth(d.getMonth() - 1);
-    document.getElementById('inv-month').value = d.toISOString().slice(0, 7);
+    var p = m.split('-'); var d = new Date(+p[0], +p[1] - 1, 1); d.setMonth(d.getMonth() - 1);
+    document.getElementById('inv-month').value = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
     Investments.renderAll();
   },
 
   nextMonth: function() {
     var m = document.getElementById('inv-month').value || new Date().toISOString().slice(0, 7);
-    var d = new Date(m + '-01'); d.setMonth(d.getMonth() + 1);
-    document.getElementById('inv-month').value = d.toISOString().slice(0, 7);
+    var p = m.split('-'); var d = new Date(+p[0], +p[1] - 1, 1); d.setMonth(d.getMonth() + 1);
+    document.getElementById('inv-month').value = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
     Investments.renderAll();
   },
 
