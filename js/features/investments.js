@@ -25,6 +25,14 @@ var Investments = {
     return snaps.map(function(s) { return s.month; }).sort().pop();
   },
 
+  _getLatestSnapForFund: function(fundId, beforeMonth) {
+    var snaps = this.getSnaps().filter(function(s) {
+      return s.fundId === fundId && s.month < beforeMonth;
+    });
+    if (!snaps.length) return null;
+    return snaps.sort(function(a, b) { return a.month > b.month ? -1 : 1; })[0];
+  },
+
   prevMonth: function() {
     var m = document.getElementById('inv-month').value || new Date().toISOString().slice(0, 7);
     var d = new Date(m + '-01'); d.setMonth(d.getMonth() - 1);
@@ -57,9 +65,18 @@ var Investments = {
       document.getElementById('sn-prev').value = snap.prevBalance || '';
       document.getElementById('sn-curr').value = snap.currBalance || '';
       document.getElementById('sn-currency').value = snap.currency || 'CLP';
+      sel.onchange = null;
     } else {
-      document.getElementById('sn-prev').value = '';
-      document.getElementById('sn-curr').value = '';
+      var autoFill = function() {
+        var fid = document.getElementById('sn-fund').value;
+        var curMonth = document.getElementById('sn-month').value || m;
+        var latest = Investments._getLatestSnapForFund(fid, curMonth);
+        document.getElementById('sn-prev').value = latest ? (latest.currBalance || '') : '';
+        document.getElementById('sn-curr').value = '';
+        Investments.calcRet();
+      };
+      sel.onchange = autoFill;
+      autoFill();
     }
     this.calcRet();
     openModal('m-snapshot');
@@ -69,7 +86,10 @@ var Investments = {
     var prev = parseFloat(document.getElementById('sn-prev').value) || 0;
     var curr = parseFloat(document.getElementById('sn-curr').value) || 0;
     if (prev && curr) {
-      var ret = (curr - prev) / prev * 100; var diff = curr - prev;
+      var invested = parseFloat(document.getElementById('sn-invested').value) || 0;
+      var rate = MarketData.getRate(document.getElementById('sn-currency').value) || 1;
+      var investedFund = invested / rate;
+      var ret = (curr - prev - investedFund) / prev * 100; var diff = curr - prev - investedFund;
       var c = ret >= 0 ? 'var(--green)' : 'var(--red)';
       document.getElementById('sn-preview').innerHTML =
         '<div style="display:flex;gap:16px;font-family:var(--mono)">' +
@@ -89,14 +109,17 @@ var Investments = {
     var prev = parseFloat(document.getElementById('sn-prev').value) || 0;
     var curr = parseFloat(document.getElementById('sn-curr').value) || 0;
     var snapMonth = document.getElementById('sn-month').value;
+    var invested = parseFloat(document.getElementById('sn-invested').value) || 0;
+    var clpRate = MarketData.getRate(document.getElementById('sn-currency').value);
+    var investedFund = clpRate ? invested / clpRate : invested;
     var snap = {
       id: existingId || uid(),
       month: snapMonth, fundId: fid, fundName: fund ? fund.name : fid,
       currency: document.getElementById('sn-currency').value,
       prevBalance: prev, currBalance: curr,
-      invested: parseFloat(document.getElementById('sn-invested').value) || 0,
-      returnPct: prev ? (curr - prev) / prev * 100 : 0,
-      clpRate: MarketData.getRate(document.getElementById('sn-currency').value)
+      invested: invested,
+      returnPct: prev ? (curr - prev - investedFund) / prev * 100 : 0,
+      clpRate: clpRate
     };
     d.snapshots = (d.snapshots || []).filter(function(s) {
       if (existingId) return s.id !== existingId;
@@ -176,16 +199,20 @@ var Investments = {
     snaps.forEach(function(s) { totalCLP += (s.currBalance || 0) * MarketData.getRate(s.currency); });
     snaps.sort(function(a, b) { return b.currBalance - a.currBalance; });
     var t = I18n.t.bind(I18n);
-    el.innerHTML = '<table><thead><tr><th>' + t('investments.table.fund') + '</th><th>' + t('investments.table.currency') + '</th><th>' + t('investments.table.prev') + '</th><th>' + t('investments.table.curr') + '</th><th>' + t('investments.table.return') + '</th><th>' + t('investments.table.clpEquiv') + '</th><th>' + t('investments.table.portPct') + '</th><th>' + t('investments.table.invested') + '</th><th></th></tr></thead><tbody>' +
+    el.innerHTML = '<table><thead><tr><th>' + t('investments.table.fund') + '</th><th>' + t('investments.table.currency') + '</th><th>' + t('investments.table.prev') + '</th><th>' + t('investments.table.curr') + '</th><th>' + t('investments.table.return') + '</th><th>' + t('investments.table.mktGain') + '</th><th>' + t('investments.table.clpEquiv') + '</th><th>' + t('investments.table.portPct') + '</th><th>' + t('investments.table.invested') + '</th><th></th></tr></thead><tbody>' +
       snaps.map(function(s) {
         var clp = (s.currBalance || 0) * MarketData.getRate(s.currency);
         var pct = totalCLP ? clp / totalCLP * 100 : 0;
         var prev  = Fmt.foreign(s.prevBalance, s.currency);
         var curr2 = Fmt.foreign(s.currBalance, s.currency);
+        var investedFund = s.clpRate ? (s.invested || 0) / s.clpRate : (s.invested || 0);
+        var mktGain = (s.currBalance || 0) - (s.prevBalance || 0) - investedFund;
+        var mgColor = mktGain >= 0 ? 'var(--green)' : 'var(--red)';
         return '<tr><td style="font-weight:700">' + s.fundName + '</td>' +
           '<td><span class="badge bb">' + s.currency + '</span></td>' +
           '<td>' + prev + '</td><td>' + curr2 + '</td>' +
           '<td>' + Fmt.delta(s.returnPct) + '</td>' +
+          '<td style="color:' + mgColor + '">' + Fmt.foreign(mktGain, s.currency) + '</td>' +
           '<td>' + Fmt.clp(clp) + '</td>' +
           '<td><div style="display:flex;align-items:center;gap:5px"><div class="pw" style="width:50px"><div class="pf" style="width:' + Math.min(pct, 100).toFixed(0) + '%;background:var(--purple)"></div></div><span style="font-size:9px">' + pct.toFixed(0) + '%</span></div></td>' +
           '<td style="color:var(--amber)">' + (s.invested ? Fmt.clp(s.invested) : '--') + '</td>' +

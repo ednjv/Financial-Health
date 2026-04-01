@@ -179,7 +179,7 @@
   </div>
   <div class="fr">
     <div class="fg"><label class="fl" data-i18n="investments.modal.labelCurrency">Moneda</label><select id="sn-currency" class="inp"><option value="CLP">CLP — Chilean Peso</option><option value="USD">USD — US Dollar</option><option value="EUR">EUR — Euro</option><option value="JPY">JPY — Japanese Yen</option><option value="GBP">GBP — British Pound</option><option value="AUD">AUD — Australian Dollar</option><option value="CAD">CAD — Canadian Dollar</option><option value="CHF">CHF — Swiss Franc</option><option value="CNY">CNY — Chinese Yuan</option><option value="BRL">BRL — Brazilian Real</option></select></div>
-    <div class="fg"><label class="fl" data-i18n="investments.modal.labelInvested">Invertido este mes (CLP)</label><input type="number" id="sn-invested" class="inp" placeholder="0"></div>
+    <div class="fg"><label class="fl" data-i18n="investments.modal.labelInvested">Invertido este mes (CLP)</label><input type="number" id="sn-invested" class="inp" placeholder="0" oninput="Investments.calcRet()"></div>
   </div>
   <div class="card-sm" style="margin-bottom:14px" id="sn-preview"><div style="font-size:12px;color:var(--muted)" data-i18n="investments.modal.previewEmpty">Ingresa balances para ver rendimiento</div></div>
   <div style="display:flex;gap:8px"><button class="btn btn-cyan" onclick="Investments.saveSnap()" data-i18n="investments.modal.save">Guardar</button><button class="btn btn-ghost" onclick="closeModal('m-snapshot')" data-i18n="investments.modal.cancel">Cancelar</button></div>

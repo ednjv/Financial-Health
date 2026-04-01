@@ -63,7 +63,7 @@ var I18n = {
         },
         table: {
           fund: 'Fondo', currency: 'Moneda', prev: 'Anterior',
-          curr: 'Actual', return: 'Retorno', clpEquiv: 'CLP equiv.',
+          curr: 'Actual', return: 'Retorno %', mktGain: 'Retorno $', clpEquiv: 'CLP equiv.',
           portPct: '% Port.', invested: 'Invertido'
         },
         suggest: {
@@ -215,7 +215,7 @@ var I18n = {
         },
         table: {
           fund: 'Fund', currency: 'Currency', prev: 'Previous',
-          curr: 'Current', return: 'Return', clpEquiv: 'CLP equiv.',
+          curr: 'Current', return: 'Return %', mktGain: 'Mkt gain $', clpEquiv: 'CLP equiv.',
           portPct: '% Port.', invested: 'Invested'
         },
         suggest: {
