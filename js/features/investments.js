@@ -25,6 +25,12 @@ var Investments = {
     return snaps.map(function(s) { return s.month; }).sort().pop();
   },
 
+  _updateInvestedLabel: function() {
+    var cur = document.getElementById('sn-currency').value || 'CLP';
+    var lbl = document.querySelector('label[for="sn-invested"], label[data-i18n="investments.modal.labelInvested"]');
+    if (lbl) lbl.textContent = I18n.t('investments.modal.labelInvested') + ' (' + cur + ')';
+  },
+
   _getLatestSnapForFund: function(fundId, beforeMonth) {
     var snaps = this.getSnaps().filter(function(s) {
       return s.fundId === fundId && s.month < beforeMonth;
@@ -60,12 +66,14 @@ var Investments = {
     sel.innerHTML = this.getFunds().map(function(f) {
       return '<option value="' + f.id + '">' + f.name + ' (' + f.currency + ')</option>';
     }).join('');
+    var curSel = document.getElementById('sn-currency');
     if (snap) {
       sel.value = snap.fundId;
       document.getElementById('sn-prev').value = snap.prevBalance || '';
       document.getElementById('sn-curr').value = snap.currBalance || '';
-      document.getElementById('sn-currency').value = snap.currency || 'CLP';
+      curSel.value = snap.currency || 'CLP';
       sel.onchange = null;
+      curSel.onchange = function() { Investments._updateInvestedLabel(); Investments.calcRet(); };
     } else {
       var autoFill = function() {
         var fid = document.getElementById('sn-fund').value;
@@ -73,11 +81,16 @@ var Investments = {
         var latest = Investments._getLatestSnapForFund(fid, curMonth);
         document.getElementById('sn-prev').value = latest ? (latest.currBalance || '') : '';
         document.getElementById('sn-curr').value = '';
+        var fund = Investments.getFunds().filter(function(f) { return f.id === fid; })[0];
+        if (fund) curSel.value = fund.currency || 'CLP';
+        Investments._updateInvestedLabel();
         Investments.calcRet();
       };
       sel.onchange = autoFill;
+      curSel.onchange = function() { Investments._updateInvestedLabel(); Investments.calcRet(); };
       autoFill();
     }
+    this._updateInvestedLabel();
     this.calcRet();
     openModal('m-snapshot');
   },
@@ -87,9 +100,7 @@ var Investments = {
     var curr = parseFloat(document.getElementById('sn-curr').value) || 0;
     if (prev && curr) {
       var invested = parseFloat(document.getElementById('sn-invested').value) || 0;
-      var rate = MarketData.getRate(document.getElementById('sn-currency').value) || 1;
-      var investedFund = invested / rate;
-      var ret = (curr - prev - investedFund) / prev * 100; var diff = curr - prev - investedFund;
+      var ret = (curr - prev - invested) / prev * 100; var diff = curr - prev - invested;
       var c = ret >= 0 ? 'var(--green)' : 'var(--red)';
       document.getElementById('sn-preview').innerHTML =
         '<div style="display:flex;gap:16px;font-family:var(--mono)">' +
@@ -110,15 +121,15 @@ var Investments = {
     var curr = parseFloat(document.getElementById('sn-curr').value) || 0;
     var snapMonth = document.getElementById('sn-month').value;
     var invested = parseFloat(document.getElementById('sn-invested').value) || 0;
-    var clpRate = MarketData.getRate(document.getElementById('sn-currency').value);
-    var investedFund = clpRate ? invested / clpRate : invested;
+    var currency = document.getElementById('sn-currency').value;
+    var clpRate = MarketData.getRate(currency);
     var snap = {
       id: existingId || uid(),
       month: snapMonth, fundId: fid, fundName: fund ? fund.name : fid,
-      currency: document.getElementById('sn-currency').value,
+      currency: currency,
       prevBalance: prev, currBalance: curr,
       invested: invested,
-      returnPct: prev ? (curr - prev - investedFund) / prev * 100 : 0,
+      returnPct: prev ? (curr - prev - invested) / prev * 100 : 0,
       clpRate: clpRate
     };
     d.snapshots = (d.snapshots || []).filter(function(s) {
@@ -172,8 +183,9 @@ var Investments = {
     var snaps = this.getSnaps().filter(function(s) { return s.month === month; });
     var totalCLP = 0, totalRet = 0, totalInv = 0;
     snaps.forEach(function(s) {
-      totalCLP += ((s.currBalance || 0) * MarketData.getRate(s.currency));
-      totalRet += (s.returnPct || 0); totalInv += (s.invested || 0);
+      var rate = MarketData.getRate(s.currency);
+      totalCLP += ((s.currBalance || 0) * rate);
+      totalRet += (s.returnPct || 0); totalInv += (s.invested || 0) * rate;
     });
     var avgRet = snaps.length ? totalRet / snaps.length : 0;
     var el = document.getElementById('inv-kpis'); if (!el) return;
@@ -215,7 +227,7 @@ var Investments = {
           '<td style="color:' + mgColor + '">' + Fmt.foreign(mktGain, s.currency) + '</td>' +
           '<td>' + Fmt.clp(clp) + '</td>' +
           '<td><div style="display:flex;align-items:center;gap:5px"><div class="pw" style="width:50px"><div class="pf" style="width:' + Math.min(pct, 100).toFixed(0) + '%;background:var(--purple)"></div></div><span style="font-size:9px">' + pct.toFixed(0) + '%</span></div></td>' +
-          '<td style="color:var(--amber)">' + (s.invested ? Fmt.clp(s.invested) : '--') + '</td>' +
+          '<td style="color:var(--amber)">' + (s.invested ? Fmt.foreign(s.invested, s.currency) : '--') + '</td>' +
           '<td><div style="display:flex;gap:4px">' +
             '<button class="btn btn-ghost" style="padding:2px 7px;font-size:10px" onclick="Investments.openSnapModal(\'' + s.id + '\')">✏</button>' +
             '<button class="btn btn-red" style="padding:2px 7px;font-size:10px" onclick="Investments.deleteSnap(\'' + s.id + '\')">×</button>' +
@@ -240,7 +252,7 @@ var Investments = {
     } else {
       if (!salary) { el.innerHTML = '<p style="font-size:12px;color:var(--muted)">' + I18n.t('investments.suggest.configSalary') + '</p>'; return; }
       savingsTarget = salary * savPct / 100;
-      investedThisMonth = snaps.reduce(function(s, x) { return s + (x.invested || 0); }, 0);
+      investedThisMonth = snaps.reduce(function(s, x) { return s + (x.invested || 0) * (x.clpRate || 1); }, 0);
       leftToInvest = savingsTarget - investedThisMonth;
     }
 
