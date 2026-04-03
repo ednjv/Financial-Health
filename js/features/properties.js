@@ -124,6 +124,17 @@ var Properties = {
     document.getElementById('rn-net').value = a + i - d - c - e;
   },
 
+  _adjustPaidInstallments: function(propertyId, delta) {
+    var props = this.getAll();
+    for (var i = 0; i < props.length; i++) {
+      if (props[i].id === propertyId) {
+        props[i].paidInstallments = (props[i].paidInstallments || 0) + delta;
+        Store.set(SK.properties, props);
+        break;
+      }
+    }
+  },
+
   saveRent: function() {
     var sel = document.getElementById('rn-prop');
     var r = {
@@ -138,8 +149,14 @@ var Properties = {
       net: parseFloat(document.getElementById('rn-net').value) || 0,
       notes: document.getElementById('rn-notes').value
     };
+    var oldRent = this._editingRentId ? this.getRents().filter(function(x) { return x.id === r.id; })[0] : null;
     var rents = this.getRents().filter(function(x) { return x.id !== r.id; }); rents.push(r);
     Store.set(SK.rents, rents);
+    // Auto-update paidInstallments when dividend changes
+    var oldDiv = oldRent ? (oldRent.dividend > 0 ? 1 : 0) : 0;
+    var newDiv = r.dividend > 0 ? 1 : 0;
+    var delta = newDiv - oldDiv;
+    if (delta !== 0) this._adjustPaidInstallments(r.propertyId, delta);
     this._editingRentId = null;
     closeModal('m-rent'); this.renderAll();
   },
@@ -205,7 +222,9 @@ var Properties = {
 
   deleteRent: function(id) {
     if (!confirm(I18n.t('properties.confirm.deleteRent'))) return;
+    var rent = this.getRents().filter(function(r) { return r.id === id; })[0];
     Store.set(SK.rents, this.getRents().filter(function(r) { return r.id !== id; }));
+    if (rent && rent.dividend > 0) this._adjustPaidInstallments(rent.propertyId, -1);
     this.renderAll();
   },
 
