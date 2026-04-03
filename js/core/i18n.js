@@ -111,6 +111,7 @@ var I18n = {
           beds: 'DORMS', baths: 'BAÑOS', parking: 'ESTAC.', mortgage: 'Crédito',
           bank: 'Banco:', rate: 'Tasa:', fee: 'Cuota:', clp: 'CLP:',
           estDebt: 'Deuda est.:', appreciation: 'Plusvalía aprox:',
+          cost: 'Precio compra:', paidSoFar: 'Pagado a la fecha:',
           recentRents: 'Últimos arriendos', edit: 'Editar'
         },
         m2Table: { property: 'Propiedad', month: 'Mes', value: 'Valor m²', noRecords: 'Sin registros' },
@@ -263,6 +264,7 @@ var I18n = {
           beds: 'BEDS', baths: 'BATHS', parking: 'PARK.', mortgage: 'Mortgage',
           bank: 'Bank:', rate: 'Rate:', fee: 'Payment:', clp: 'CLP:',
           estDebt: 'Est. debt:', appreciation: 'Approx. appreciation:',
+          cost: 'Purchase price:', paidSoFar: 'Paid to date:',
           recentRents: 'Recent rents', edit: 'Edit'
         },
         m2Table: { property: 'Property', month: 'Month', value: 'm² Value', noRecords: 'No records' },

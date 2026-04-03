@@ -284,6 +284,8 @@ var Properties = {
           '<div><span style="color:var(--muted)">' + t('properties.card.rate') + ' </span>' + (p.annualRate || '--') + '%</div>' +
           '<div><span style="color:var(--muted)">' + t('properties.card.fee') + ' </span>' + Fmt.uf(p.ufFee) + '</div>' +
           '<div><span style="color:var(--muted)">' + t('properties.card.clp') + ' </span>' + (p.ufFee ? Fmt.clp(p.ufFee * uf) : '--') + '</div>' +
+          (p.ufPrice ? '<div style="grid-column:1/-1"><span style="color:var(--muted)">' + t('properties.card.cost') + ' </span>' + Fmt.uf(p.ufPrice) + ' = ' + Fmt.clp(p.ufPrice * uf) + '</div>' : '') +
+          (p.paidInstallments && p.ufFee ? '<div style="grid-column:1/-1"><span style="color:var(--muted)">' + t('properties.card.paidSoFar') + ' </span><span style="color:var(--cyan)">' + Fmt.uf(p.paidInstallments * p.ufFee) + ' = ' + Fmt.clp(p.paidInstallments * p.ufFee * uf) + '</span></div>' : '') +
           (debtUF ? '<div style="grid-column:1/-1"><span style="color:var(--muted)">' + t('properties.card.estDebt') + ' </span><span style="color:var(--red)">' + Fmt.uf(debtUF) + ' = ' + Fmt.clp(debtUF * uf) + '</span></div>' : '') +
           (lm2 && p.sqm ? '<div style="grid-column:1/-1"><span style="color:var(--muted)">' + t('properties.card.appreciation') + ' </span><span style="color:var(--green)">' + Fmt.clp(lm2.value * p.sqm) + '</span>' + (plus !== null ? ' <span style="color:' + (plus >= 0 ? 'var(--green)' : 'var(--red)') + '">' + Fmt.pct(plus) + '</span>' : '') + '</div>' : '') +
         '</div>' +
