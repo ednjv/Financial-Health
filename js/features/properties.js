@@ -251,6 +251,19 @@ var Properties = {
     return total;
   },
 
+  // Public breakdown used by NetWorth — per-property remaining debt in UF and CLP
+  getDebtBreakdown: function() {
+    var uf = MarketData.getUF(); var self = this; var totalCLP = 0;
+    var items = this.getAll()
+      .map(function(p) {
+        var debtUF = self._remainingDebtUF(p);
+        return { name: p.name, debtUF: debtUF, clpValue: debtUF * uf };
+      })
+      .filter(function(item) { return item.debtUF > 0; });
+    items.forEach(function(item) { totalCLP += item.clpValue; });
+    return { items: items, totalCLP: totalCLP };
+  },
+
   renderAll: function() {
     this._ensure();
     var props = this.getAll(); var rents = this.getRents(); var uf = MarketData.getUF();

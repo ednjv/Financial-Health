@@ -31,7 +31,8 @@ var I18n = {
       nav: {
         wealth: 'PATRIMONIO', system: 'SISTEMA',
         investments: 'Inversiones', properties: 'Propiedades',
-        emergency: 'Fondos Emergencia', pension: 'Fondos de Pensión', settings: 'Ajustes'
+        emergency: 'Fondos Emergencia', pension: 'Fondos de Pensión',
+        networth: 'Patrimonio Neto', settings: 'Ajustes'
       },
       ticker: { label: 'MERCADO', refresh: 'Actualizar', export: 'Export', import: 'Import' },
       investments: {
@@ -170,6 +171,22 @@ var I18n = {
         empty: { title: 'Aún no hay fondos de pensión', hint: 'Añade uno para comenzar a rastrear tu ahorro previsional' },
         confirm: { deleteFund: '¿Eliminar este fondo de pensión?' }
       },
+      networth: {
+        title: 'Patrimonio Neto',
+        subtitle: 'Estimación basada en tus inversiones, fondos de pensión y propiedades',
+        assetsSection: 'Activos', liabilitiesSection: 'Pasivos',
+        totalAssets: 'Total Activos', totalLiabilities: 'Total Pasivos', netWorth: 'Patrimonio Neto',
+        items: {
+          investments: 'Inversiones', pension: 'Fondos de Pensión',
+          properties: 'Propiedades — Valor Mercado', mortgages: 'Hipotecas pendientes'
+        },
+        sources: { m2: 'valor m²', uf: 'precio compra UF' },
+        kpi: { assets: 'Activos', liabilities: 'Pasivos', netWorth: 'Patrimonio Neto', coverage: 'Cobertura' },
+        notes: {
+          investmentsEmpty: 'Sin snapshots de inversiones', pensionEmpty: 'Sin fondos de pensión',
+          propertiesEmpty: 'Sin propiedades con valor estimable', mortgagesEmpty: 'Sin hipotecas registradas'
+        }
+      },
       settings: {
         title: 'Ajustes', subtitle: 'Parámetros financieros — Datos locales',
         financialSection: 'Parámetros Financieros', localDataSection: 'Datos Locales',
@@ -198,7 +215,8 @@ var I18n = {
       nav: {
         wealth: 'WEALTH', system: 'SYSTEM',
         investments: 'Investments', properties: 'Properties',
-        emergency: 'Emergency Funds', pension: 'Pension Funds', settings: 'Settings'
+        emergency: 'Emergency Funds', pension: 'Pension Funds',
+        networth: 'Net Worth', settings: 'Settings'
       },
       ticker: { label: 'MARKET', refresh: 'Refresh', export: 'Export', import: 'Import' },
       investments: {
@@ -337,6 +355,22 @@ var I18n = {
         empty: { title: 'No pension funds yet', hint: 'Add one to start tracking your retirement savings' },
         confirm: { deleteFund: 'Delete this pension fund?' }
       },
+      networth: {
+        title: 'Net Worth',
+        subtitle: 'Estimate based on your investments, pension funds, and properties',
+        assetsSection: 'Assets', liabilitiesSection: 'Liabilities',
+        totalAssets: 'Total Assets', totalLiabilities: 'Total Liabilities', netWorth: 'Net Worth',
+        items: {
+          investments: 'Investments', pension: 'Pension Funds',
+          properties: 'Properties — Market Value', mortgages: 'Outstanding mortgages'
+        },
+        sources: { m2: 'm² value', uf: 'UF purchase price' },
+        kpi: { assets: 'Assets', liabilities: 'Liabilities', netWorth: 'Net Worth', coverage: 'Coverage' },
+        notes: {
+          investmentsEmpty: 'No investment snapshots', pensionEmpty: 'No pension funds',
+          propertiesEmpty: 'No properties with estimable value', mortgagesEmpty: 'No mortgages recorded'
+        }
+      },
       settings: {
         title: 'Settings', subtitle: 'Financial parameters — Local data',
         financialSection: 'Financial Parameters', localDataSection: 'Local Data',
@@ -409,6 +443,7 @@ var I18n = {
       else if (view === 'properties'  && typeof Properties    !== 'undefined') Properties.renderAll();
       else if (view === 'emergency'   && typeof EmergencyFunds !== 'undefined') EmergencyFunds.renderAll();
       else if (view === 'pension'     && typeof PensionFunds   !== 'undefined') PensionFunds.renderAll();
+      else if (view === 'networth'    && typeof NetWorth       !== 'undefined') NetWorth.renderAll();
       else if (view === 'settings'    && typeof Settings       !== 'undefined') Settings.load();
     }
     if (typeof MarketData    !== 'undefined') MarketData._render();

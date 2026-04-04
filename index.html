@@ -22,6 +22,7 @@
     <div class="nav-item" onclick="nav('properties')"><span style="width:18px">🏠</span> <span data-i18n="nav.properties">Propiedades</span></div>
     <div class="nav-item" onclick="nav('emergency')"><span style="width:18px">🆘</span> <span data-i18n="nav.emergency">Fondos Emergencia</span></div>
     <div class="nav-item" onclick="nav('pension')"><span style="width:18px">🏦</span> <span data-i18n="nav.pension">Fondos de Pensión</span></div>
+    <div class="nav-item" onclick="nav('networth')"><span style="width:18px">💼</span> <span data-i18n="nav.networth">Patrimonio Neto</span></div>
     <div style="padding:10px 0 6px;font-size:9px;color:var(--muted);letter-spacing:.15em;padding-left:22px" data-i18n="nav.system">SISTEMA</div>
     <div class="nav-item" onclick="nav('settings')"><span style="width:18px">⚙</span> <span data-i18n="nav.settings">Ajustes</span></div>
   </nav>
@@ -94,6 +95,15 @@
   <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap"><button class="btn btn-cyan" onclick="EmergencyFunds.openAddModal()" data-i18n="emergency.addFund">+ Añadir Fondo</button></div>
   <div class="g4" style="margin-bottom:16px" id="emf-kpis"></div>
   <div id="emf-funds"></div>
+</div>
+
+<!-- NET WORTH -->
+<div id="view-networth" class="view">
+  <div class="stitle" data-i18n="networth.title">Patrimonio Neto</div>
+  <div class="ssub" data-i18n="networth.subtitle">Estimación basada en tus inversiones, fondos de pensión y propiedades</div>
+  <div class="g4" style="margin-bottom:16px" id="nw-kpis"></div>
+  <div class="g2" style="margin-bottom:16px" id="nw-breakdown"></div>
+  <div class="card" id="nw-total"></div>
 </div>
 
 <!-- PENSION FUNDS -->
@@ -279,6 +289,7 @@
 <script src="js/features/properties.js"></script>
 <script src="js/features/emergency-funds.js"></script>
 <script src="js/features/pension-funds.js"></script>
+<script src="js/features/net-worth.js"></script>
 <script src="js/features/settings.js"></script>
 <script src="js/features/data-io.js"></script>
 <script src="js/utils.js"></script>

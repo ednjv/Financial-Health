@@ -28,6 +28,13 @@ A personal finance dashboard built with vanilla JavaScript. Tracks investments, 
 - Totals and equivalents auto-converted to your configured primary currency
 - Designed for worldwide use — a description field replaces any country-specific fields
 
+### Net Worth
+- Aggregates data from all modules — no manual input required
+- Assets: investment portfolio (latest snapshot per fund), pension fund balances, property market value
+- Property value uses latest m² price × area when available, falls back to UF purchase price
+- Liabilities: outstanding mortgage debt per property (French amortization formula)
+- All amounts converted to your primary currency; adapts automatically when data is missing
+
 ### Settings
 - Monthly salary and budget split (needs / wants / savings)
 - Property admin commission rate
@@ -67,4 +74,5 @@ All data lives in your browser's localStorage. Use **Settings → Export** to ba
 | `sfv1:m2` | m² value history per property |
 | `sfv1:emergency` | Emergency fund goals |
 | `sfv1:pension` | Pension fund balances |
+| *(net worth)* | *No storage — computed on demand from other modules* |
 | `sfv1:cache:market` | Cached exchange rates (UF, USD, EUR, BTC) |
