@@ -21,6 +21,7 @@
     <div class="nav-item active" onclick="nav('investments')"><span style="width:18px">📈</span> <span data-i18n="nav.investments">Inversiones</span></div>
     <div class="nav-item" onclick="nav('properties')"><span style="width:18px">🏠</span> <span data-i18n="nav.properties">Propiedades</span></div>
     <div class="nav-item" onclick="nav('emergency')"><span style="width:18px">🆘</span> <span data-i18n="nav.emergency">Fondos Emergencia</span></div>
+    <div class="nav-item" onclick="nav('pension')"><span style="width:18px">🏦</span> <span data-i18n="nav.pension">Fondos de Pensión</span></div>
     <div style="padding:10px 0 6px;font-size:9px;color:var(--muted);letter-spacing:.15em;padding-left:22px" data-i18n="nav.system">SISTEMA</div>
     <div class="nav-item" onclick="nav('settings')"><span style="width:18px">⚙</span> <span data-i18n="nav.settings">Ajustes</span></div>
   </nav>
@@ -93,6 +94,15 @@
   <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap"><button class="btn btn-cyan" onclick="EmergencyFunds.openAddModal()" data-i18n="emergency.addFund">+ Añadir Fondo</button></div>
   <div class="g4" style="margin-bottom:16px" id="emf-kpis"></div>
   <div id="emf-funds"></div>
+</div>
+
+<!-- PENSION FUNDS -->
+<div id="view-pension" class="view">
+  <div class="stitle" data-i18n="pension.title">Fondos de Pensión</div>
+  <div class="ssub" data-i18n="pension.subtitle">Ahorro previsional — saldo acumulado por fondo</div>
+  <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap"><button class="btn btn-cyan" onclick="PensionFunds.openAddModal()" data-i18n="pension.addFund">+ Añadir Fondo</button></div>
+  <div class="g4" style="margin-bottom:16px" id="pf-kpis"></div>
+  <div id="pf-funds"></div>
 </div>
 
 <!-- SETTINGS -->
@@ -247,6 +257,17 @@
   <div style="display:flex;gap:8px"><button class="btn btn-cyan" onclick="EmergencyFunds.saveFund()" data-i18n="emergency.modal.save">Guardar</button><button class="btn btn-ghost" onclick="EmergencyFunds.closeModal()" data-i18n="emergency.modal.cancel">Cancelar</button></div>
 </div></div>
 
+<div class="modal-bg" id="m-pension-fund"><div class="modal">
+  <div class="mtitle" id="pf-modal-title">Añadir Fondo de Pensión</div>
+  <input type="hidden" id="pfm-id">
+  <div class="fg"><label class="fl" data-i18n="pension.modal.labelDesc">Descripción</label><input type="text" id="pfm-desc" class="inp" placeholder="Ej: AFP Habitat Fondo B"></div>
+  <div class="fr">
+    <div class="fg"><label class="fl" data-i18n="pension.modal.labelAmount">Saldo acumulado</label><input type="number" id="pfm-amount" class="inp" placeholder="0"></div>
+    <div class="fg"><label class="fl" data-i18n="pension.modal.labelCurrency">Moneda</label><select id="pfm-currency" class="inp"></select></div>
+  </div>
+  <div style="display:flex;gap:8px"><button class="btn btn-cyan" onclick="PensionFunds.saveFund()" data-i18n="pension.modal.save">Guardar</button><button class="btn btn-ghost" onclick="closeModal('m-pension-fund')" data-i18n="pension.modal.cancel">Cancelar</button></div>
+</div></div>
+
 <!-- JS modules — load order matters (no bundler) -->
 <script src="js/core/i18n.js"></script>
 <script src="js/core/store.js"></script>
@@ -257,6 +278,7 @@
 <script src="js/features/investments.js"></script>
 <script src="js/features/properties.js"></script>
 <script src="js/features/emergency-funds.js"></script>
+<script src="js/features/pension-funds.js"></script>
 <script src="js/features/settings.js"></script>
 <script src="js/features/data-io.js"></script>
 <script src="js/utils.js"></script>

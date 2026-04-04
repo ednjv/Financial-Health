@@ -27,6 +27,7 @@ function nav(view) {
   if (view === 'investments') Investments.renderAll();
   if (view === 'properties')  Properties.renderAll();
   if (view === 'emergency')   EmergencyFunds.renderAll();
+  if (view === 'pension')     PensionFunds.renderAll();
   if (view === 'settings')    Settings.load();
 }
 

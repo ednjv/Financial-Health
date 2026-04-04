@@ -31,7 +31,7 @@ var I18n = {
       nav: {
         wealth: 'PATRIMONIO', system: 'SISTEMA',
         investments: 'Inversiones', properties: 'Propiedades',
-        emergency: 'Fondos Emergencia', settings: 'Ajustes'
+        emergency: 'Fondos Emergencia', pension: 'Fondos de Pensión', settings: 'Ajustes'
       },
       ticker: { label: 'MERCADO', refresh: 'Actualizar', export: 'Export', import: 'Import' },
       investments: {
@@ -156,6 +156,20 @@ var I18n = {
         preview: { goal: 'META', balance: 'BALANCE', shortfall: 'FALTANTE', progress: 'AVANCE' },
         confirm: { deleteFund: '¿Eliminar este fondo de emergencia?' }
       },
+      pension: {
+        title: 'Fondos de Pensión',
+        subtitle: 'Ahorro previsional — saldo acumulado por fondo',
+        addFund: '+ Añadir Fondo',
+        modal: {
+          titleAdd: 'Añadir Fondo de Pensión', titleEdit: 'Editar Fondo de Pensión',
+          labelDesc: 'Descripción', labelAmount: 'Saldo acumulado', labelCurrency: 'Moneda',
+          save: 'Guardar', cancel: 'Cancelar'
+        },
+        kpi: { count: 'Fondos', total: 'Total', largest: 'Mayor fondo', currencies: 'Monedas' },
+        card: { balance: 'SALDO', equivalent: 'EQUIVALENTE', edit: 'Editar' },
+        empty: { title: 'Aún no hay fondos de pensión', hint: 'Añade uno para comenzar a rastrear tu ahorro previsional' },
+        confirm: { deleteFund: '¿Eliminar este fondo de pensión?' }
+      },
       settings: {
         title: 'Ajustes', subtitle: 'Parámetros financieros — Datos locales',
         financialSection: 'Parámetros Financieros', localDataSection: 'Datos Locales',
@@ -184,7 +198,7 @@ var I18n = {
       nav: {
         wealth: 'WEALTH', system: 'SYSTEM',
         investments: 'Investments', properties: 'Properties',
-        emergency: 'Emergency Funds', settings: 'Settings'
+        emergency: 'Emergency Funds', pension: 'Pension Funds', settings: 'Settings'
       },
       ticker: { label: 'MARKET', refresh: 'Refresh', export: 'Export', import: 'Import' },
       investments: {
@@ -309,6 +323,20 @@ var I18n = {
         preview: { goal: 'GOAL', balance: 'BALANCE', shortfall: 'SHORTFALL', progress: 'PROGRESS' },
         confirm: { deleteFund: 'Delete this emergency fund?' }
       },
+      pension: {
+        title: 'Pension Funds',
+        subtitle: 'Retirement savings — accumulated balance per fund',
+        addFund: '+ Add Fund',
+        modal: {
+          titleAdd: 'Add Pension Fund', titleEdit: 'Edit Pension Fund',
+          labelDesc: 'Description', labelAmount: 'Accumulated balance', labelCurrency: 'Currency',
+          save: 'Save', cancel: 'Cancel'
+        },
+        kpi: { count: 'Funds', total: 'Total', largest: 'Largest fund', currencies: 'Currencies' },
+        card: { balance: 'BALANCE', equivalent: 'EQUIVALENT', edit: 'Edit' },
+        empty: { title: 'No pension funds yet', hint: 'Add one to start tracking your retirement savings' },
+        confirm: { deleteFund: 'Delete this pension fund?' }
+      },
       settings: {
         title: 'Settings', subtitle: 'Financial parameters — Local data',
         financialSection: 'Financial Parameters', localDataSection: 'Local Data',
@@ -380,6 +408,7 @@ var I18n = {
       if (view === 'investments' && typeof Investments !== 'undefined') Investments.renderAll();
       else if (view === 'properties'  && typeof Properties    !== 'undefined') Properties.renderAll();
       else if (view === 'emergency'   && typeof EmergencyFunds !== 'undefined') EmergencyFunds.renderAll();
+      else if (view === 'pension'     && typeof PensionFunds   !== 'undefined') PensionFunds.renderAll();
       else if (view === 'settings'    && typeof Settings       !== 'undefined') Settings.load();
     }
     if (typeof MarketData    !== 'undefined') MarketData._render();

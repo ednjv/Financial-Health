@@ -10,7 +10,8 @@ var SK = {
   m2:          'sfv1:m2',
   cMarket:     'sfv1:cache:market',
   budgetStats: 'sfv1:budgetStats',
-  emergency:   'sfv1:emergency'
+  emergency:   'sfv1:emergency',
+  pension:     'sfv1:pension'
 };
 
 // ============================================================
