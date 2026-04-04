@@ -1,6 +1,6 @@
 # 📊 Financial Health
 
-A personal finance dashboard built with vanilla JavaScript. Tracks investments, real estate, and emergency funds — all stored locally in the browser, no backend required.
+A personal finance dashboard built with vanilla JavaScript. Tracks investments, real estate, emergency funds, and pension savings — all stored locally in the browser, no backend required.
 
 ## Features
 
@@ -22,10 +22,16 @@ A personal finance dashboard built with vanilla JavaScript. Tracks investments, 
 - Flexible goal types: months of salary, needs, wants, rental dividends, or a fixed amount
 - Progress tracking with shortfall/surplus calculation
 
+### Pension Funds
+- Track retirement savings across multiple funds or providers
+- Currency-agnostic: enter balances in any of the 10 supported currencies
+- Totals and equivalents auto-converted to your configured primary currency
+- Designed for worldwide use — a description field replaces any country-specific fields
+
 ### Settings
 - Monthly salary and budget split (needs / wants / savings)
 - Property admin commission rate
-- Primary display currency
+- Primary display currency (used across all modules for converted totals)
 - Full data export and import as JSON
 
 ## Tech
@@ -51,3 +57,14 @@ python3 -m http.server
 ## Data
 
 All data lives in your browser's localStorage. Use **Settings → Export** to back it up as a dated JSON file, and **Import** to restore it.
+
+| Key | Contents |
+|---|---|
+| `sfv1:config` | Salary, budget percentages, primary currency |
+| `sfv1:investments` | Fund definitions and monthly snapshots |
+| `sfv1:properties` | Property details and mortgage data |
+| `sfv1:rents` | Rental income history |
+| `sfv1:m2` | m² value history per property |
+| `sfv1:emergency` | Emergency fund goals |
+| `sfv1:pension` | Pension fund balances |
+| `sfv1:cache:market` | Cached exchange rates (UF, USD, EUR, BTC) |
