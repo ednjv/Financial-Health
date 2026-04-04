@@ -29,7 +29,7 @@ var Properties = {
     var map = [
       ['pr-id','id'],['pr-name','name'],['pr-addr','address'],['pr-commune','commune'],['pr-unit','unit'],
       ['pr-sqm','sqm'],['pr-beds','bedrooms'],['pr-baths','bathrooms'],['pr-layout','layout'],
-      ['pr-parking','parking'],['pr-storage','storage'],['pr-ufprice','ufPrice'],['pr-uffee','ufFee'],
+      ['pr-parking','parking'],['pr-storage','storage'],['pr-ufprice','ufPrice'],['pr-ufloan','ufLoan'],['pr-uffee','ufFee'],
       ['pr-total','totalInstallments'],['pr-paid','paidInstallments'],['pr-bank','bank'],
       ['pr-rate','annualRate'],['pr-ctype','creditType'],['pr-notes','notes'],['pr-extra-comm','defaultExtraCommission']
     ];
@@ -48,7 +48,7 @@ var Properties = {
     var p = {
       id:id, name:sv('pr-name'), address:sv('pr-addr'), commune:sv('pr-commune'), unit:sv('pr-unit'),
       sqm:fv('pr-sqm'), bedrooms:iv('pr-beds'), bathrooms:iv('pr-baths'), layout:sv('pr-layout'),
-      parking:sv('pr-parking'), storage:sv('pr-storage'), ufPrice:fv('pr-ufprice'), ufFee:fv('pr-uffee'),
+      parking:sv('pr-parking'), storage:sv('pr-storage'), ufPrice:fv('pr-ufprice'), ufLoan:fv('pr-ufloan'), ufFee:fv('pr-uffee'),
       totalInstallments:iv('pr-total'), paidInstallments:iv('pr-paid'), bank:sv('pr-bank'),
       annualRate:fv('pr-rate'), creditType:sv('pr-ctype'), notes:sv('pr-notes'),
       defaultExtraCommission:fv('pr-extra-comm') || 0
@@ -228,23 +228,36 @@ var Properties = {
     this.renderAll();
   },
 
+  // Returns remaining principal in UF using French amortization formula.
+  // Falls back to ufFee * remainingInstallments when loan or rate data is missing.
+  _remainingDebtUF: function(p) {
+    var n = p.totalInstallments || 0;
+    var k = p.paidInstallments || 0;
+    var rem = n - k;
+    if (!rem) return 0;
+    if (p.ufLoan && p.annualRate && n) {
+      var r = p.annualRate / 100 / 12;
+      var pow = Math.pow(1 + r, n);
+      var powK = Math.pow(1 + r, k);
+      return p.ufLoan * (pow - powK) / (pow - 1);
+    }
+    return p.ufFee && rem ? p.ufFee * rem : 0;
+  },
+
   calcTotalMortgageDebt: function() {
     var uf = MarketData.getUF(); var total = 0;
-    this.getAll().forEach(function(p) {
-      var rem = (p.totalInstallments || 0) - (p.paidInstallments || 0);
-      total += p.ufFee && rem ? p.ufFee * rem * uf : 0;
-    });
+    var self = this;
+    this.getAll().forEach(function(p) { total += self._remainingDebtUF(p) * uf; });
     return total;
   },
 
   renderAll: function() {
     this._ensure();
     var props = this.getAll(); var rents = this.getRents(); var uf = MarketData.getUF();
-    var t = I18n.t.bind(I18n);
+    var t = I18n.t.bind(I18n); var self = this;
     var totalDebtUF = 0;
     props.forEach(function(p) {
-      var rem = (p.totalInstallments || 0) - (p.paidInstallments || 0);
-      totalDebtUF += p.ufFee && rem ? p.ufFee * rem : 0;
+      totalDebtUF += self._remainingDebtUF(p);
     });
     var yearPrefix = new Date().getFullYear() + '-01';
     var yearRents  = rents.filter(function(r) { return r.month >= yearPrefix; });
@@ -260,8 +273,8 @@ var Properties = {
 
     var m2data = this.getM2();
     document.getElementById('prop-cards').innerHTML = props.map(function(p) {
-      var rem = (p.totalInstallments || 0) - (p.paidInstallments || 0);
-      var debtUF = p.ufFee && rem ? p.ufFee * rem : 0;
+      var debtUF = self._remainingDebtUF(p);
+      var paidPrincipalUF = p.ufLoan ? (p.ufLoan - debtUF) : 0;
       var progress = p.totalInstallments ? (p.paidInstallments || 0) / p.totalInstallments * 100 : 0;
       var pRents = rents.filter(function(r) { return r.propertyId === p.id; }).sort(function(a, b) { return new Date(b.month + '-01') - new Date(a.month + '-01'); }).slice(0, 3);
       var pm2 = m2data.filter(function(m) { return m.propertyId === p.id; }).sort(function(a, b) { return new Date(b.month + '-01') - new Date(a.month + '-01'); });
@@ -285,7 +298,7 @@ var Properties = {
           '<div><span style="color:var(--muted)">' + t('properties.card.fee') + ' </span>' + Fmt.uf(p.ufFee) + '</div>' +
           '<div><span style="color:var(--muted)">' + t('properties.card.clp') + ' </span>' + (p.ufFee ? Fmt.clp(p.ufFee * uf) : '--') + '</div>' +
           (p.ufPrice ? '<div style="grid-column:1/-1"><span style="color:var(--muted)">' + t('properties.card.cost') + ' </span>' + Fmt.uf(p.ufPrice) + ' = ' + Fmt.clp(p.ufPrice * uf) + '</div>' : '') +
-          (p.paidInstallments && p.ufFee ? '<div style="grid-column:1/-1"><span style="color:var(--muted)">' + t('properties.card.paidSoFar') + ' </span><span style="color:var(--cyan)">' + Fmt.uf(p.paidInstallments * p.ufFee) + ' = ' + Fmt.clp(p.paidInstallments * p.ufFee * uf) + '</span></div>' : '') +
+          (paidPrincipalUF > 0 ? '<div style="grid-column:1/-1"><span style="color:var(--muted)">' + t('properties.card.paidSoFar') + ' </span><span style="color:var(--cyan)">' + Fmt.uf(paidPrincipalUF) + ' = ' + Fmt.clp(paidPrincipalUF * uf) + '</span></div>' : '') +
           (debtUF ? '<div style="grid-column:1/-1"><span style="color:var(--muted)">' + t('properties.card.estDebt') + ' </span><span style="color:var(--red)">' + Fmt.uf(debtUF) + ' = ' + Fmt.clp(debtUF * uf) + '</span></div>' : '') +
           (lm2 && p.sqm ? '<div style="grid-column:1/-1"><span style="color:var(--muted)">' + t('properties.card.appreciation') + ' </span><span style="color:var(--green)">' + Fmt.clp(lm2.value * p.sqm) + '</span>' + (plus !== null ? ' <span style="color:' + (plus >= 0 ? 'var(--green)' : 'var(--red)') + '">' + Fmt.pct(plus) + '</span>' : '') + '</div>' : '') +
         '</div>' +
