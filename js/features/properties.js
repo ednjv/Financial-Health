@@ -274,7 +274,7 @@ var Properties = {
     var m2data = this.getM2();
     document.getElementById('prop-cards').innerHTML = props.map(function(p) {
       var debtUF = self._remainingDebtUF(p);
-      var paidPrincipalUF = p.ufLoan ? (p.ufLoan - debtUF) : 0;
+      var paidSoFarUF = (p.ufFee && p.paidInstallments) ? p.ufFee * p.paidInstallments : 0;
       var progress = p.totalInstallments ? (p.paidInstallments || 0) / p.totalInstallments * 100 : 0;
       var pRents = rents.filter(function(r) { return r.propertyId === p.id; }).sort(function(a, b) { return new Date(b.month + '-01') - new Date(a.month + '-01'); }).slice(0, 3);
       var pm2 = m2data.filter(function(m) { return m.propertyId === p.id; }).sort(function(a, b) { return new Date(b.month + '-01') - new Date(a.month + '-01'); });
@@ -298,7 +298,7 @@ var Properties = {
           '<div><span style="color:var(--muted)">' + t('properties.card.fee') + ' </span>' + Fmt.uf(p.ufFee) + '</div>' +
           '<div><span style="color:var(--muted)">' + t('properties.card.clp') + ' </span>' + (p.ufFee ? Fmt.clp(p.ufFee * uf) : '--') + '</div>' +
           (p.ufPrice ? '<div style="grid-column:1/-1"><span style="color:var(--muted)">' + t('properties.card.cost') + ' </span>' + Fmt.uf(p.ufPrice) + ' = ' + Fmt.clp(p.ufPrice * uf) + '</div>' : '') +
-          (paidPrincipalUF > 0 ? '<div style="grid-column:1/-1"><span style="color:var(--muted)">' + t('properties.card.paidSoFar') + ' </span><span style="color:var(--cyan)">' + Fmt.uf(paidPrincipalUF) + ' = ' + Fmt.clp(paidPrincipalUF * uf) + '</span></div>' : '') +
+          (paidSoFarUF > 0 ? '<div style="grid-column:1/-1"><span style="color:var(--muted)">' + t('properties.card.paidSoFar') + ' </span><span style="color:var(--cyan)">' + Fmt.uf(paidSoFarUF) + ' = ' + Fmt.clp(paidSoFarUF * uf) + '</span></div>' : '') +
           (debtUF ? '<div style="grid-column:1/-1"><span style="color:var(--muted)">' + t('properties.card.estDebt') + ' </span><span style="color:var(--red)">' + Fmt.uf(debtUF) + ' = ' + Fmt.clp(debtUF * uf) + '</span></div>' : '') +
           (lm2 && p.sqm ? '<div style="grid-column:1/-1"><span style="color:var(--muted)">' + t('properties.card.appreciation') + ' </span><span style="color:var(--green)">' + Fmt.clp(lm2.value * p.sqm) + '</span>' + (plus !== null ? ' <span style="color:' + (plus >= 0 ? 'var(--green)' : 'var(--red)') + '">' + Fmt.pct(plus) + '</span>' : '') + '</div>' : '') +
         '</div>' +
