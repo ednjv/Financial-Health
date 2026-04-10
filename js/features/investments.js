@@ -5,14 +5,15 @@
 // ============================================================
 var Investments = {
   _defs: function() {
+    var n = null;
     return [
-      {id:'fintual',  name:'Fintual',             currency:'CLP', desc:'Fondo mutuo mixto'},
-      {id:'itaudin',  name:'FFMM Itau Dinamico',  currency:'CLP', desc:'Fondo Itau Dinámico'},
-      {id:'quilter',  name:'Quilter/Utmost',       currency:'USD', desc:'Portafolio internacional'},
-      {id:'ib',       name:'Interactive Brokers',  currency:'USD', desc:'Broker internacional'},
-      {id:'ml',       name:'MercadoLibre',         currency:'CLP', desc:'Fondo ML'},
-      {id:'scotia',   name:'FM Scotia USA',        currency:'CLP', desc:'FM Scotia Acciones USA'},
-      {id:'global66', name:'Global66 USD',         currency:'USD', desc:'Multi-divisa'}
+      {id:'fintual',  name:'Fintual',             currency:'CLP', desc:'Fondo mutuo mixto',           ticker:n, isin:n, run_cmf:n, cusip:n, bloomberg_ticker:n, price_source:'none'},
+      {id:'itaudin',  name:'FFMM Itau Dinamico',  currency:'CLP', desc:'Fondo Itau Dinámico',         ticker:n, isin:n, run_cmf:n, cusip:n, bloomberg_ticker:n, price_source:'none'},
+      {id:'quilter',  name:'Quilter/Utmost',       currency:'USD', desc:'Portafolio internacional',    ticker:n, isin:n, run_cmf:n, cusip:n, bloomberg_ticker:n, price_source:'none'},
+      {id:'ib',       name:'Interactive Brokers',  currency:'USD', desc:'Broker internacional',        ticker:n, isin:n, run_cmf:n, cusip:n, bloomberg_ticker:n, price_source:'none'},
+      {id:'ml',       name:'MercadoLibre',         currency:'CLP', desc:'Fondo ML',                   ticker:n, isin:n, run_cmf:n, cusip:n, bloomberg_ticker:n, price_source:'none'},
+      {id:'scotia',   name:'FM Scotia USA',        currency:'CLP', desc:'FM Scotia Acciones USA',      ticker:n, isin:n, run_cmf:n, cusip:n, bloomberg_ticker:n, price_source:'none'},
+      {id:'global66', name:'Global66 USD',         currency:'USD', desc:'Multi-divisa',               ticker:n, isin:n, run_cmf:n, cusip:n, bloomberg_ticker:n, price_source:'none'}
     ];
   },
   _get:      function() { return Store.get(SK.invest, {funds:[], snapshots:[]}); },
@@ -29,6 +30,91 @@ var Investments = {
     var cur = document.getElementById('sn-currency').value || 'CLP';
     var lbl = document.querySelector('label[for="sn-invested"], label[data-i18n="investments.modal.labelInvested"]');
     if (lbl) lbl.textContent = I18n.t('investments.modal.labelInvested') + ' (' + cur + ')';
+  },
+
+  // ── Fund identifier helpers ──────────────────────────────────
+  _updatePriceSourceOptions: function() {
+    var sel = document.getElementById('fn-price-source'); if (!sel) return;
+    var t = I18n.t.bind(I18n);
+    var ticker  = (document.getElementById('fn-ticker').value  || '').trim();
+    var isin    = (document.getElementById('fn-isin').value    || '').trim();
+    var runCmf  = (document.getElementById('fn-run-cmf').value || '').trim();
+    var cusip   = (document.getElementById('fn-cusip').value   || '').trim();
+    var current = sel.value;
+    // Build available options in display order
+    var order = ['none','cmf_chile','yahoo_finance','alpha_vantage','morningstar','manual'];
+    var labels = {
+      none:        t('investments.modal.priceSrcNone'),
+      cmf_chile:   t('investments.modal.priceSrcCmf'),
+      yahoo_finance: t('investments.modal.priceSrcYahoo'),
+      alpha_vantage: t('investments.modal.priceSrcAlpha'),
+      morningstar: t('investments.modal.priceSrcMorningstar'),
+      manual:      t('investments.modal.priceSrcManual')
+    };
+    var available = {none: true, manual: true};
+    if (runCmf)           available.cmf_chile      = true;
+    if (ticker)           available.yahoo_finance   = true;
+    if (ticker || cusip)  available.alpha_vantage   = true;
+    if (isin   || cusip)  available.morningstar     = true;
+    sel.innerHTML = order.filter(function(k) { return available[k]; }).map(function(k) {
+      return '<option value="' + k + '"' + (k === current ? ' selected' : '') + '>' + labels[k] + '</option>';
+    }).join('');
+    if (!available[current]) sel.value = 'none';
+  },
+
+  _applyTooltips: function() {
+    var t = I18n.t.bind(I18n);
+    var map = {
+      'tip-ticker':       'helpTicker',
+      'tip-isin':         'helpIsin',
+      'tip-run-cmf':      'helpRunCmf',
+      'tip-cusip':        'helpCusip',
+      'tip-bloomberg':    'helpBloomberg',
+      'tip-price-source': 'helpPriceSource'
+    };
+    Object.keys(map).forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.title = t('investments.modal.' + map[id]);
+    });
+  },
+
+  openFundEdit: function(id) {
+    var fund = this.getFunds().filter(function(f) { return f.id === id; })[0]; if (!fund) return;
+    document.getElementById('fn-id').value = fund.id;
+    document.getElementById('fn-name').value = fund.name;
+    document.getElementById('fn-currency').value = fund.currency || 'CLP';
+    document.getElementById('fn-desc').value = fund.desc || '';
+    document.getElementById('fn-ticker').value  = fund.ticker           || '';
+    document.getElementById('fn-isin').value    = fund.isin             || '';
+    document.getElementById('fn-run-cmf').value = fund.run_cmf          || '';
+    document.getElementById('fn-cusip').value   = fund.cusip            || '';
+    document.getElementById('fn-bloomberg').value = fund.bloomberg_ticker || '';
+    this._updatePriceSourceOptions();
+    document.getElementById('fn-price-source').value = fund.price_source || 'none';
+    var hasIds = !!(fund.ticker || fund.isin || fund.run_cmf || fund.cusip || fund.bloomberg_ticker || (fund.price_source && fund.price_source !== 'none'));
+    document.getElementById('fn-market-details').open = hasIds;
+    var btn = document.getElementById('fn-save-btn');
+    if (btn) { btn.textContent = I18n.t('investments.modal.updateFund'); btn.removeAttribute('data-i18n'); }
+    document.getElementById('fn-cancel-edit-btn').style.display = '';
+    // Scroll to the form area
+    var details = document.getElementById('fn-market-details');
+    if (details) setTimeout(function() { details.scrollIntoView({behavior:'smooth', block:'nearest'}); }, 50);
+  },
+
+  _cancelFundEdit: function() {
+    document.getElementById('fn-id').value = '';
+    document.getElementById('fn-name').value = '';
+    document.getElementById('fn-desc').value = '';
+    document.getElementById('fn-ticker').value = '';
+    document.getElementById('fn-isin').value = '';
+    document.getElementById('fn-run-cmf').value = '';
+    document.getElementById('fn-cusip').value = '';
+    document.getElementById('fn-bloomberg').value = '';
+    this._updatePriceSourceOptions();
+    document.getElementById('fn-market-details').open = false;
+    var btn = document.getElementById('fn-save-btn');
+    if (btn) { btn.setAttribute('data-i18n', 'investments.modal.saveFund'); btn.textContent = I18n.t('investments.modal.saveFund'); }
+    document.getElementById('fn-cancel-edit-btn').style.display = 'none';
   },
 
   _getLatestSnapForFund: function(fundId, beforeMonth) {
@@ -142,25 +228,75 @@ var Investments = {
     closeModal('m-snapshot'); this.renderAll();
   },
 
-  openFundModal: function() { this._renderFundList(); openModal('m-funds'); },
+  openFundModal: function() {
+    this._cancelFundEdit();  // reset form to add-mode
+    this._applyTooltips();
+    this._renderFundList();
+    openModal('m-funds');
+  },
 
   _renderFundList: function() {
     var el = document.getElementById('funds-list'); if (!el) return;
     el.innerHTML = this.getFunds().map(function(f) {
+      var ids = [];
+      if (f.ticker)          ids.push('<span class="badge bb" title="Ticker" style="margin-left:4px">' + f.ticker + '</span>');
+      if (f.run_cmf)         ids.push('<span class="badge bb" title="RUN CMF" style="margin-left:4px">CMF:' + f.run_cmf + '</span>');
+      if (f.isin)            ids.push('<span class="badge bb" title="ISIN" style="margin-left:4px">' + f.isin + '</span>');
+      if (f.price_source && f.price_source !== 'none')
+        ids.push('<span class="badge" style="margin-left:4px;background:rgba(6,182,212,.12);color:var(--cyan)" title="Fuente de precio">' + f.price_source + '</span>');
       return '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">' +
         '<div><span style="font-weight:700;font-size:13px">' + f.name + '</span>' +
         '<span class="badge bb" style="margin-left:6px">' + f.currency + '</span>' +
+        ids.join('') +
         '<div style="font-size:11px;color:var(--muted)">' + (f.desc || '') + '</div></div>' +
-        '<button class="btn btn-red" style="padding:3px 8px;font-size:11px" onclick="Investments.deleteFund(\'' + f.id + '\')">×</button></div>';
+        '<div style="display:flex;gap:4px">' +
+        '<button class="btn btn-ghost" style="padding:3px 8px;font-size:11px" onclick="Investments.openFundEdit(\'' + f.id + '\')">✏</button>' +
+        '<button class="btn btn-red" style="padding:3px 8px;font-size:11px" onclick="Investments.deleteFund(\'' + f.id + '\')">×</button>' +
+        '</div></div>';
     }).join('');
   },
 
   saveFund: function() {
     var name = document.getElementById('fn-name').value.trim(); if (!name) return;
+    var ticker  = document.getElementById('fn-ticker').value.trim().toUpperCase();
+    var isin    = document.getElementById('fn-isin').value.trim().toUpperCase();
+    var runCmf  = document.getElementById('fn-run-cmf').value.trim();
+    var cusip   = document.getElementById('fn-cusip').value.trim().toUpperCase();
+    var bloomberg = document.getElementById('fn-bloomberg').value.trim();
+    var priceSource = document.getElementById('fn-price-source').value || 'none';
+    // Validate identifiers
+    if (ticker && !/^[A-Z0-9]{1,10}$/.test(ticker)) {
+      alert('Ticker inválido: máx 10 caracteres alfanuméricos en mayúsculas.\nEj: VOO, SPY, AAPL'); return;
+    }
+    if (isin && !/^[A-Z]{2}[A-Z0-9]{10}$/.test(isin)) {
+      alert('ISIN inválido: 2 letras + 10 alfanuméricos (12 chars total).\nEj: IE000JIZVX47'); return;
+    }
+    if (runCmf && !/^\d{4,6}$/.test(runCmf)) {
+      alert('RUN CMF inválido: solo dígitos, entre 4 y 6 caracteres.\nEj: 9570, 10517'); return;
+    }
+    if (priceSource !== 'none' && !ticker && !isin && !runCmf && !cusip && !bloomberg) {
+      alert('Si seleccionas una fuente de precio, debes completar al menos un identificador.'); return;
+    }
     var d = this._get(); if (!d.funds || !d.funds.length) d.funds = this._defs();
-    d.funds.push({id:uid(), name:name, currency:document.getElementById('fn-currency').value, desc:document.getElementById('fn-desc').value});
+    var editId = document.getElementById('fn-id').value;
+    var fundData = {
+      name: name,
+      currency: document.getElementById('fn-currency').value,
+      desc: document.getElementById('fn-desc').value,
+      ticker: ticker || null, isin: isin || null, run_cmf: runCmf || null,
+      cusip: cusip || null, bloomberg_ticker: bloomberg || null, price_source: priceSource
+    };
+    if (editId) {
+      d.funds = d.funds.map(function(f) {
+        return f.id === editId ? Object.assign({}, f, fundData) : f;
+      });
+      Debug.info('Fund updated: ' + name);
+    } else {
+      d.funds.push(Object.assign({id: uid()}, fundData));
+      Debug.info('Fund added: ' + name);
+    }
     this._save(d);
-    document.getElementById('fn-name').value = ''; document.getElementById('fn-desc').value = '';
+    this._cancelFundEdit();
     this._renderFundList();
   },
 
