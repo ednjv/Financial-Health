@@ -341,11 +341,18 @@ var Investments = {
     var rows = funds.map(function(f) {
       var entry = cache[f.id];
 
-      // ── identifier badge ──
+      // ── identifier badge — shows the primary param used by the active price_source ──
       var idBadge = '';
-      if (f.ticker)       idBadge = '<span class="badge bb" style="font-size:9px;margin-left:5px">' + f.ticker + '</span>';
-      else if (f.run_cmf) idBadge = '<span class="badge bb" style="font-size:9px;margin-left:5px">CMF:' + f.run_cmf + '</span>';
-      else if (f.isin)    idBadge = '<span class="badge bb" style="font-size:9px;margin-left:5px">' + f.isin + '</span>';
+      var src = f.price_source;
+      if (src === 'fintual' && f.fintual_id) {
+        idBadge = '<span class="badge bb" style="font-size:9px;margin-left:5px">FT:' + f.fintual_id + '</span>';
+      } else if (src === 'cmf_chile' && f.run_cmf) {
+        idBadge = '<span class="badge bb" style="font-size:9px;margin-left:5px">CMF:' + f.run_cmf + '</span>';
+      } else if ((src === 'yahoo_finance' || src === 'alpha_vantage' || src === 'morningstar') && f.ticker) {
+        idBadge = '<span class="badge bb" style="font-size:9px;margin-left:5px">' + f.ticker + '</span>';
+      } else if (src === 'morningstar' && f.isin) {
+        idBadge = '<span class="badge bb" style="font-size:9px;margin-left:5px">' + f.isin + '</span>';
+      }
 
       // ── price cell ──
       var priceHtml;
