@@ -8,8 +8,9 @@
 var FundPrices = {
   // ── Runtime config (reads SK.config so values are always current) ──────────
   // Defaults and proxy names are editable in Settings → Precios de Mercado.
-  _CMF_URL_DEFAULT:   'https://api.cmfchile.cl/api-sbifv3/recursos/fondos-mutuos/{run}/series/valores-cuota',
-  _YAHOO_URL_DEFAULT: 'https://query1.finance.yahoo.com/v8/finance/chart/{ticker}?interval=1d&range=5d',
+  _CMF_URL_DEFAULT:    'https://api.cmfchile.cl/api-sbifv3/recursos/fondos-mutuos/{run}/series/valores-cuota',
+  _YAHOO_URL_DEFAULT:  'https://query1.finance.yahoo.com/v8/finance/chart/{ticker}?interval=1d&range=5d',
+  _FINTUAL_URL_DEFAULT:'https://fintual.cl/api/real_assets/{id}/days',
 
   _cfg: function() {
     var c = Store.get(SK.config, {});
@@ -20,10 +21,15 @@ var FundPrices = {
       timeout:       (c.fundPricesTimeout  != null ? +c.fundPricesTimeout  : 12)  * 1000,
       proxy1:        c.fundPricesProxy1        || 'corsproxy.io',
       proxy2:        c.fundPricesProxy2        || 'allorigins.win',
-      cmfUrl:        c.fundPricesCmfUrl        || this._CMF_URL_DEFAULT,
-      yahooUrl:      c.fundPricesYahooUrl      || this._YAHOO_URL_DEFAULT,
-      cmfHeaderName: c.fundPricesCmfHeaderName || '',
-      cmfHeaderVal:  c.fundPricesCmfHeaderVal  || ''
+      cmfUrl:        c.fundPricesCmfUrl     || this._CMF_URL_DEFAULT,
+      yahooUrl:      c.fundPricesYahooUrl   || this._YAHOO_URL_DEFAULT,
+      fintualUrl:    c.fundPricesFintualUrl || this._FINTUAL_URL_DEFAULT,
+      cmfApiKey:     c.fundPricesCmfApiKey  || '',
+      cmfFormat:     c.fundPricesCmfFormat  || 'JSON',
+      // Enabled flags — all on by default; turn off to suppress fetching from that source
+      cmfEnabled:     c.fundPricesCmfEnabled     !== false,
+      yahooEnabled:   c.fundPricesYahooEnabled   !== false,
+      fintualEnabled: c.fundPricesFintualEnabled  !== false
     };
   },
 
@@ -60,13 +66,24 @@ var FundPrices = {
     }
   },
 
+  // Returns true if the given price source is enabled in config.
+  _isSourceEnabled: function(source) {
+    var cfg = this._cfg();
+    if (source === 'cmf_chile')    return cfg.cmfEnabled;
+    if (source === 'yahoo_finance' || source === 'alpha_vantage' || source === 'morningstar')
+                                   return cfg.yahooEnabled;
+    if (source === 'fintual')      return cfg.fintualEnabled;
+    return true;
+  },
+
   // ── Cache helpers ──────────────────────────────────────────
   _getCache: function() { return Store.get(SK.cFundPrices, {}); },
   _setCache: function(d) { Store.set(SK.cFundPrices, d); },
 
   _ttlFor: function(source) {
     var cfg = this._cfg();
-    return source === 'cmf_chile' ? cfg.ttlLong : cfg.ttlShort;
+    // CMF and Fintual publish prices once per day — use long TTL
+    return (source === 'cmf_chile' || source === 'fintual') ? cfg.ttlLong : cfg.ttlShort;
   },
 
   _isFresh: function(entry) {
@@ -99,13 +116,16 @@ var FundPrices = {
 
   // ── Source: CMF Chile ──────────────────────────────────────
   // Endpoint: configurable via fundPricesCmfUrl; uses {run} as placeholder.
+  // Auth and format are sent as GET query params (?apikey=...&formato=...).
   // Response: array of { fecha, valor_cuota } — Chilean decimal (comma)
   _fetchCmf: async function(runCmf) {
-    var cfg = this._cfg();
-    var url = cfg.cmfUrl.replace('{run}', encodeURIComponent(runCmf));
-    var headers = {};
-    if (cfg.cmfHeaderName && cfg.cmfHeaderVal) headers[cfg.cmfHeaderName] = cfg.cmfHeaderVal;
-    var raw = await this._proxyFetch(url, Object.keys(headers).length ? headers : undefined);
+    var cfg    = this._cfg();
+    var url    = cfg.cmfUrl.replace('{run}', encodeURIComponent(runCmf));
+    var params = [];
+    if (cfg.cmfApiKey) params.push('apikey=' + encodeURIComponent(cfg.cmfApiKey));
+    if (cfg.cmfFormat) params.push('formato=' + encodeURIComponent(cfg.cmfFormat));
+    if (params.length) url += (url.indexOf('?') >= 0 ? '&' : '?') + params.join('&');
+    var raw = await this._proxyFetch(url);
 
     // Normalize: response may be a bare array or wrapped { valores_cuota: [...] }
     var rows = Array.isArray(raw)
@@ -178,6 +198,50 @@ var FundPrices = {
     };
   },
 
+  // ── Source: Fintual ───────────────────────────────────────
+  // Endpoint: configurable via fundPricesFintualUrl; uses {id} as placeholder.
+  // Fetches last 7 calendar days to ensure ≥2 trading-day rows.
+  // Response: { data: [{ attributes: { date, price } }] } — price in CLP
+  _fetchFintual: async function(fintualId) {
+    var cfg     = this._cfg();
+    var today   = new Date();
+    var toDate  = today.toISOString().slice(0, 10);
+    var fromDate = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    var base    = cfg.fintualUrl.replace('{id}', encodeURIComponent(fintualId));
+    var url     = base + '?from_date=' + fromDate + '&to_date=' + toDate;
+    var raw     = await this._proxyFetch(url);
+
+    var rows = raw && raw.data;
+    if (!rows || !rows.length) throw new Error('Fintual: no data for id ' + fintualId);
+
+    // Sort descending by date
+    rows = rows.slice().sort(function(a, b) {
+      var da = (a.attributes && a.attributes.date) || '';
+      var db = (b.attributes && b.attributes.date) || '';
+      return da < db ? 1 : -1;
+    });
+
+    var latest = rows[0] && rows[0].attributes;
+    var prev   = rows[1] && rows[1].attributes;
+    if (!latest || latest.price == null) throw new Error('Fintual: invalid response for id ' + fintualId);
+
+    var price    = parseFloat(latest.price);
+    var change1d = null, change1d_pct = null;
+    if (prev && prev.price != null) {
+      var prevPrice = parseFloat(prev.price);
+      if (prevPrice) {
+        change1d     = price - prevPrice;
+        change1d_pct = change1d / prevPrice * 100;
+      }
+    }
+    Debug.res('Fintual id:' + fintualId + ' → ' + price + ' CLP (rows:' + rows.length + ')');
+    return {
+      price: price, currency: 'CLP',
+      change1d: change1d, change1d_pct: change1d_pct,
+      last_updated: new Date().toISOString(), source: 'fintual'
+    };
+  },
+
   // ── Public API ─────────────────────────────────────────────
 
   // Fetch live price for a single fund.
@@ -189,6 +253,13 @@ var FundPrices = {
 
     var cache = this._getCache();
     var entry = cache[fund.id];
+
+    // If the source is disabled, return stale cache or null without fetching
+    if (!this._isSourceEnabled(fund.price_source)) {
+      Debug.info('FundPrices: source "' + fund.price_source + '" disabled, skipping ' + fund.name);
+      return entry || null;
+    }
+
     if (this._isFresh(entry)) {
       Debug.info('FundPrices cache hit: ' + fund.name);
       return entry;
@@ -200,6 +271,8 @@ var FundPrices = {
         result = await this._fetchCmf(fund.run_cmf);
       } else if (fund.price_source === 'yahoo_finance' && fund.ticker) {
         result = await this._fetchYahoo(fund.ticker);
+      } else if (fund.price_source === 'fintual' && fund.fintual_id) {
+        result = await this._fetchFintual(fund.fintual_id);
       } else if (fund.price_source === 'alpha_vantage' && fund.ticker) {
         // Alpha Vantage requires API key; fall back to Yahoo for public use
         result = await this._fetchYahoo(fund.ticker);

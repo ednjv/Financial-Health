@@ -176,27 +176,57 @@
       </div>
       <div class="card" style="margin-bottom:14px">
         <div class="sh" style="color:var(--purple)" data-i18n="settings.apiSourcesSection">Fuentes de API</div>
+
         <!-- CMF Chile -->
-        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--cyan);margin-bottom:8px;font-family:var(--mono);font-weight:700">CMF Chile</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <span style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--cyan);font-family:var(--mono);font-weight:700">CMF Chile</span>
+          <div style="display:flex;align-items:center;gap:7px">
+            <span style="font-size:10px;color:var(--muted);font-family:var(--mono)" data-i18n="settings.apiActive">Activo</span>
+            <label class="tog"><input type="checkbox" id="cfg-fp-cmf-enabled"><span class="tog-sl"></span></label>
+          </div>
+        </div>
         <div class="fg">
           <label class="fl"><span data-i18n="settings.labelFpCmfUrl">URL API CMF</span> <span style="color:var(--muted);cursor:help" id="tip-fp-cmf-url" title="">ⓘ</span></label>
           <input type="text" id="cfg-fp-cmf-url" class="inp" placeholder="https://api.cmfchile.cl/…/{run}/…">
         </div>
         <div class="fr">
           <div class="fg">
-            <label class="fl"><span data-i18n="settings.labelFpCmfHeaderName">Cabecera API key</span> <span style="color:var(--muted);cursor:help" id="tip-fp-cmf-header" title="">ⓘ</span></label>
-            <input type="text" id="cfg-fp-cmf-header-name" class="inp" placeholder="apikey">
+            <label class="fl"><span data-i18n="settings.labelFpCmfApiKey">API key (param apikey)</span> <span style="color:var(--muted);cursor:help" id="tip-fp-cmf-apikey" title="">ⓘ</span></label>
+            <input type="text" id="cfg-fp-cmf-apikey" class="inp" placeholder="tu-api-key-aquí" autocomplete="off">
           </div>
           <div class="fg">
-            <label class="fl"><span data-i18n="settings.labelFpCmfHeaderVal">Valor API key</span> <span style="color:var(--muted);cursor:help" id="tip-fp-cmf-header-val" title="">ⓘ</span></label>
-            <input type="text" id="cfg-fp-cmf-header-val" class="inp" placeholder="tu-api-key-aquí" autocomplete="off">
+            <label class="fl"><span data-i18n="settings.labelFpCmfFormato">Formato (param formato)</span> <span style="color:var(--muted);cursor:help" id="tip-fp-cmf-formato" title="">ⓘ</span></label>
+            <select id="cfg-fp-cmf-formato" class="inp">
+              <option value="JSON">JSON</option>
+              <option value="XML">XML</option>
+            </select>
           </div>
         </div>
+
         <!-- Yahoo Finance -->
-        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--amber);margin-bottom:8px;margin-top:10px;font-family:var(--mono);font-weight:700">Yahoo Finance</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;margin-top:10px">
+          <span style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--amber);font-family:var(--mono);font-weight:700">Yahoo Finance</span>
+          <div style="display:flex;align-items:center;gap:7px">
+            <span style="font-size:10px;color:var(--muted);font-family:var(--mono)" data-i18n="settings.apiActive">Activo</span>
+            <label class="tog"><input type="checkbox" id="cfg-fp-yahoo-enabled"><span class="tog-sl"></span></label>
+          </div>
+        </div>
         <div class="fg">
           <label class="fl"><span data-i18n="settings.labelFpYahooUrl">URL API Yahoo</span> <span style="color:var(--muted);cursor:help" id="tip-fp-yahoo-url" title="">ⓘ</span></label>
           <input type="text" id="cfg-fp-yahoo-url" class="inp" placeholder="https://query1.finance.yahoo.com/…/{ticker}…">
+        </div>
+
+        <!-- Fintual -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;margin-top:10px">
+          <span style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--green);font-family:var(--mono);font-weight:700">Fintual</span>
+          <div style="display:flex;align-items:center;gap:7px">
+            <span style="font-size:10px;color:var(--muted);font-family:var(--mono)" data-i18n="settings.apiActive">Activo</span>
+            <label class="tog"><input type="checkbox" id="cfg-fp-fintual-enabled"><span class="tog-sl"></span></label>
+          </div>
+        </div>
+        <div class="fg">
+          <label class="fl"><span data-i18n="settings.labelFpFintualUrl">URL API Fintual</span> <span style="color:var(--muted);cursor:help" id="tip-fp-fintual-url" title="">ⓘ</span></label>
+          <input type="text" id="cfg-fp-fintual-url" class="inp" placeholder="https://fintual.cl/api/real_assets/{id}/days">
         </div>
       </div>
       <div class="card" style="margin-bottom:14px">
@@ -279,6 +309,11 @@
           <input type="text" id="fn-cusip" class="inp" placeholder="Ej: 922908363" maxlength="9"
             oninput="this.value=this.value.toUpperCase();Investments._updatePriceSourceOptions()">
         </div>
+      </div>
+      <div class="fg">
+        <label class="fl"><span data-i18n="investments.modal.labelFintualId">Fintual Asset ID</span> <span style="color:var(--muted);cursor:help" id="tip-fintual-id" title="">ⓘ</span></label>
+        <input type="text" id="fn-fintual-id" class="inp" placeholder="Ej: 188"
+          oninput="this.value=this.value.replace(/\D/g,'');Investments._updatePriceSourceOptions()">
       </div>
       <div class="fr">
         <div class="fg">

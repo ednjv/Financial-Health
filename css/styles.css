@@ -80,6 +80,13 @@ select.inp option{background:var(--bg2)}
 #debug-log{flex:1;overflow-y:auto;padding:6px 12px;font-family:var(--mono);font-size:10px;line-height:1.7}
 .dl-info{color:#64748b}.dl-req{color:var(--cyan)}.dl-res{color:var(--green)}.dl-err{color:var(--red)}.dl-warn{color:var(--amber)}.dl-data{color:#a855f7;padding-left:18px;white-space:pre-wrap}
 #debug-toggle{position:fixed;bottom:0;right:14px;z-index:101;background:var(--bg3);border:1px solid var(--border);border-bottom:none;padding:4px 12px;border-radius:6px 6px 0 0;cursor:pointer;font-size:10px;font-family:var(--mono);color:var(--cyan)}
+/* ── Toggle switch ───────────────────────────────────────── */
+.tog{position:relative;display:inline-block;width:36px;height:20px;flex-shrink:0}
+.tog input{opacity:0;width:0;height:0;position:absolute}
+.tog-sl{position:absolute;inset:0;background:rgba(255,255,255,.08);border:1px solid var(--border);border-radius:99px;cursor:pointer;transition:.2s}
+.tog-sl:before{content:'';position:absolute;height:14px;width:14px;left:2px;top:2px;background:var(--muted);border-radius:50%;transition:.2s}
+.tog input:checked+.tog-sl{background:rgba(0,212,255,.18);border-color:rgba(0,212,255,.45)}
+.tog input:checked+.tog-sl:before{transform:translateX(16px);background:var(--cyan)}
 .kpi-delta{font-size:11px;margin-top:3px;font-family:var(--mono)}
 /* ── Month Picker ────────────────────────────────────────── */
 .mp-wrap{position:relative;display:inline-block}

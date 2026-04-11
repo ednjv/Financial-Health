@@ -7,13 +7,13 @@ var Investments = {
   _defs: function() {
     var n = null;
     return [
-      {id:'fintual',  name:'Fintual',             currency:'CLP', desc:'Fondo mutuo mixto',           ticker:n, isin:n, run_cmf:n, cusip:n, bloomberg_ticker:n, price_source:'none'},
-      {id:'itaudin',  name:'FFMM Itau Dinamico',  currency:'CLP', desc:'Fondo Itau Dinámico',         ticker:n, isin:n, run_cmf:n, cusip:n, bloomberg_ticker:n, price_source:'none'},
-      {id:'quilter',  name:'Quilter/Utmost',       currency:'USD', desc:'Portafolio internacional',    ticker:n, isin:n, run_cmf:n, cusip:n, bloomberg_ticker:n, price_source:'none'},
-      {id:'ib',       name:'Interactive Brokers',  currency:'USD', desc:'Broker internacional',        ticker:n, isin:n, run_cmf:n, cusip:n, bloomberg_ticker:n, price_source:'none'},
-      {id:'ml',       name:'MercadoLibre',         currency:'CLP', desc:'Fondo ML',                   ticker:n, isin:n, run_cmf:n, cusip:n, bloomberg_ticker:n, price_source:'none'},
-      {id:'scotia',   name:'FM Scotia USA',        currency:'CLP', desc:'FM Scotia Acciones USA',      ticker:n, isin:n, run_cmf:n, cusip:n, bloomberg_ticker:n, price_source:'none'},
-      {id:'global66', name:'Global66 USD',         currency:'USD', desc:'Multi-divisa',               ticker:n, isin:n, run_cmf:n, cusip:n, bloomberg_ticker:n, price_source:'none'}
+      {id:'fintual',  name:'Fintual',             currency:'CLP', desc:'Fondo mutuo mixto',           ticker:n, isin:n, run_cmf:n, cusip:n, bloomberg_ticker:n, fintual_id:n, price_source:'none'},
+      {id:'itaudin',  name:'FFMM Itau Dinamico',  currency:'CLP', desc:'Fondo Itau Dinámico',         ticker:n, isin:n, run_cmf:n, cusip:n, bloomberg_ticker:n, fintual_id:n, price_source:'none'},
+      {id:'quilter',  name:'Quilter/Utmost',       currency:'USD', desc:'Portafolio internacional',    ticker:n, isin:n, run_cmf:n, cusip:n, bloomberg_ticker:n, fintual_id:n, price_source:'none'},
+      {id:'ib',       name:'Interactive Brokers',  currency:'USD', desc:'Broker internacional',        ticker:n, isin:n, run_cmf:n, cusip:n, bloomberg_ticker:n, fintual_id:n, price_source:'none'},
+      {id:'ml',       name:'MercadoLibre',         currency:'CLP', desc:'Fondo ML',                   ticker:n, isin:n, run_cmf:n, cusip:n, bloomberg_ticker:n, fintual_id:n, price_source:'none'},
+      {id:'scotia',   name:'FM Scotia USA',        currency:'CLP', desc:'FM Scotia Acciones USA',      ticker:n, isin:n, run_cmf:n, cusip:n, bloomberg_ticker:n, fintual_id:n, price_source:'none'},
+      {id:'global66', name:'Global66 USD',         currency:'USD', desc:'Multi-divisa',               ticker:n, isin:n, run_cmf:n, cusip:n, bloomberg_ticker:n, fintual_id:n, price_source:'none'}
     ];
   },
   _get:      function() { return Store.get(SK.invest, {funds:[], snapshots:[]}); },
@@ -42,18 +42,21 @@ var Investments = {
     var cusip   = (document.getElementById('fn-cusip').value   || '').trim();
     var current = sel.value;
     // Build available options in display order
-    var order = ['none','cmf_chile','yahoo_finance','alpha_vantage','morningstar','manual'];
+    var fintualId = (document.getElementById('fn-fintual-id').value || '').trim();
+    var order = ['none','cmf_chile','yahoo_finance','fintual','alpha_vantage','morningstar','manual'];
     var labels = {
-      none:        t('investments.modal.priceSrcNone'),
-      cmf_chile:   t('investments.modal.priceSrcCmf'),
+      none:          t('investments.modal.priceSrcNone'),
+      cmf_chile:     t('investments.modal.priceSrcCmf'),
       yahoo_finance: t('investments.modal.priceSrcYahoo'),
+      fintual:       t('investments.modal.priceSrcFintual'),
       alpha_vantage: t('investments.modal.priceSrcAlpha'),
-      morningstar: t('investments.modal.priceSrcMorningstar'),
-      manual:      t('investments.modal.priceSrcManual')
+      morningstar:   t('investments.modal.priceSrcMorningstar'),
+      manual:        t('investments.modal.priceSrcManual')
     };
     var available = {none: true, manual: true};
     if (runCmf)           available.cmf_chile      = true;
     if (ticker)           available.yahoo_finance   = true;
+    if (fintualId)        available.fintual         = true;
     if (ticker || cusip)  available.alpha_vantage   = true;
     if (isin   || cusip)  available.morningstar     = true;
     sel.innerHTML = order.filter(function(k) { return available[k]; }).map(function(k) {
@@ -69,6 +72,7 @@ var Investments = {
       'tip-isin':         'helpIsin',
       'tip-run-cmf':      'helpRunCmf',
       'tip-cusip':        'helpCusip',
+      'tip-fintual-id':   'helpFintualId',
       'tip-bloomberg':    'helpBloomberg',
       'tip-price-source': 'helpPriceSource'
     };
@@ -84,14 +88,15 @@ var Investments = {
     document.getElementById('fn-name').value = fund.name;
     document.getElementById('fn-currency').value = fund.currency || 'CLP';
     document.getElementById('fn-desc').value = fund.desc || '';
-    document.getElementById('fn-ticker').value  = fund.ticker           || '';
-    document.getElementById('fn-isin').value    = fund.isin             || '';
-    document.getElementById('fn-run-cmf').value = fund.run_cmf          || '';
-    document.getElementById('fn-cusip').value   = fund.cusip            || '';
-    document.getElementById('fn-bloomberg').value = fund.bloomberg_ticker || '';
+    document.getElementById('fn-ticker').value     = fund.ticker            || '';
+    document.getElementById('fn-isin').value       = fund.isin              || '';
+    document.getElementById('fn-run-cmf').value    = fund.run_cmf           || '';
+    document.getElementById('fn-cusip').value      = fund.cusip             || '';
+    document.getElementById('fn-fintual-id').value = fund.fintual_id        || '';
+    document.getElementById('fn-bloomberg').value  = fund.bloomberg_ticker  || '';
     this._updatePriceSourceOptions();
     document.getElementById('fn-price-source').value = fund.price_source || 'none';
-    var hasIds = !!(fund.ticker || fund.isin || fund.run_cmf || fund.cusip || fund.bloomberg_ticker || (fund.price_source && fund.price_source !== 'none'));
+    var hasIds = !!(fund.ticker || fund.isin || fund.run_cmf || fund.cusip || fund.fintual_id || fund.bloomberg_ticker || (fund.price_source && fund.price_source !== 'none'));
     document.getElementById('fn-market-details').open = hasIds;
     var btn = document.getElementById('fn-save-btn');
     if (btn) { btn.textContent = I18n.t('investments.modal.updateFund'); btn.removeAttribute('data-i18n'); }
@@ -109,6 +114,7 @@ var Investments = {
     document.getElementById('fn-isin').value = '';
     document.getElementById('fn-run-cmf').value = '';
     document.getElementById('fn-cusip').value = '';
+    document.getElementById('fn-fintual-id').value = '';
     document.getElementById('fn-bloomberg').value = '';
     this._updatePriceSourceOptions();
     document.getElementById('fn-market-details').open = false;
@@ -242,6 +248,7 @@ var Investments = {
       if (f.ticker)          ids.push('<span class="badge bb" title="Ticker" style="margin-left:4px">' + f.ticker + '</span>');
       if (f.run_cmf)         ids.push('<span class="badge bb" title="RUN CMF" style="margin-left:4px">CMF:' + f.run_cmf + '</span>');
       if (f.isin)            ids.push('<span class="badge bb" title="ISIN" style="margin-left:4px">' + f.isin + '</span>');
+      if (f.fintual_id)      ids.push('<span class="badge" style="margin-left:4px;background:rgba(16,185,129,.12);color:var(--green)" title="Fintual Asset ID">FT:' + f.fintual_id + '</span>');
       if (f.price_source && f.price_source !== 'none')
         ids.push('<span class="badge" style="margin-left:4px;background:rgba(6,182,212,.12);color:var(--cyan)" title="Fuente de precio">' + f.price_source + '</span>');
       return '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">' +
@@ -258,10 +265,11 @@ var Investments = {
 
   saveFund: function() {
     var name = document.getElementById('fn-name').value.trim(); if (!name) return;
-    var ticker  = document.getElementById('fn-ticker').value.trim().toUpperCase();
-    var isin    = document.getElementById('fn-isin').value.trim().toUpperCase();
-    var runCmf  = document.getElementById('fn-run-cmf').value.trim();
-    var cusip   = document.getElementById('fn-cusip').value.trim().toUpperCase();
+    var ticker    = document.getElementById('fn-ticker').value.trim().toUpperCase();
+    var isin      = document.getElementById('fn-isin').value.trim().toUpperCase();
+    var runCmf    = document.getElementById('fn-run-cmf').value.trim();
+    var cusip     = document.getElementById('fn-cusip').value.trim().toUpperCase();
+    var fintualId = document.getElementById('fn-fintual-id').value.trim();
     var bloomberg = document.getElementById('fn-bloomberg').value.trim();
     var priceSource = document.getElementById('fn-price-source').value || 'none';
     // Validate identifiers
@@ -274,7 +282,13 @@ var Investments = {
     if (runCmf && !/^\d{4,6}$/.test(runCmf)) {
       alert('RUN CMF inválido: solo dígitos, entre 4 y 6 caracteres.\nEj: 9570, 10517'); return;
     }
-    if (priceSource !== 'none' && !ticker && !isin && !runCmf && !cusip && !bloomberg) {
+    if (fintualId && !/^\d+$/.test(fintualId)) {
+      alert('Fintual Asset ID inválido: debe ser un número entero.\nEj: 188, 14670'); return;
+    }
+    if (priceSource === 'fintual' && !fintualId) {
+      alert('Para usar Fintual como fuente de precio debes ingresar el Fintual Asset ID.'); return;
+    }
+    if (priceSource !== 'none' && !ticker && !isin && !runCmf && !cusip && !fintualId && !bloomberg) {
       alert('Si seleccionas una fuente de precio, debes completar al menos un identificador.'); return;
     }
     var d = this._get(); if (!d.funds || !d.funds.length) d.funds = this._defs();
@@ -284,7 +298,8 @@ var Investments = {
       currency: document.getElementById('fn-currency').value,
       desc: document.getElementById('fn-desc').value,
       ticker: ticker || null, isin: isin || null, run_cmf: runCmf || null,
-      cusip: cusip || null, bloomberg_ticker: bloomberg || null, price_source: priceSource
+      cusip: cusip || null, fintual_id: fintualId || null,
+      bloomberg_ticker: bloomberg || null, price_source: priceSource
     };
     if (editId) {
       d.funds = d.funds.map(function(f) {
