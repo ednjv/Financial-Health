@@ -175,7 +175,32 @@
         </div>
       </div>
       <div class="card" style="margin-bottom:14px">
-        <div class="sh" style="color:var(--purple)" data-i18n="settings.localDataSection">Datos Locales</div>
+        <div class="sh" style="color:var(--purple)" data-i18n="settings.apiSourcesSection">Fuentes de API</div>
+        <!-- CMF Chile -->
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--cyan);margin-bottom:8px;font-family:var(--mono);font-weight:700">CMF Chile</div>
+        <div class="fg">
+          <label class="fl"><span data-i18n="settings.labelFpCmfUrl">URL API CMF</span> <span style="color:var(--muted);cursor:help" id="tip-fp-cmf-url" title="">ⓘ</span></label>
+          <input type="text" id="cfg-fp-cmf-url" class="inp" placeholder="https://api.cmfchile.cl/…/{run}/…">
+        </div>
+        <div class="fr">
+          <div class="fg">
+            <label class="fl"><span data-i18n="settings.labelFpCmfHeaderName">Cabecera API key</span> <span style="color:var(--muted);cursor:help" id="tip-fp-cmf-header" title="">ⓘ</span></label>
+            <input type="text" id="cfg-fp-cmf-header-name" class="inp" placeholder="apikey">
+          </div>
+          <div class="fg">
+            <label class="fl"><span data-i18n="settings.labelFpCmfHeaderVal">Valor API key</span> <span style="color:var(--muted);cursor:help" id="tip-fp-cmf-header-val" title="">ⓘ</span></label>
+            <input type="text" id="cfg-fp-cmf-header-val" class="inp" placeholder="tu-api-key-aquí" autocomplete="off">
+          </div>
+        </div>
+        <!-- Yahoo Finance -->
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--amber);margin-bottom:8px;margin-top:10px;font-family:var(--mono);font-weight:700">Yahoo Finance</div>
+        <div class="fg">
+          <label class="fl"><span data-i18n="settings.labelFpYahooUrl">URL API Yahoo</span> <span style="color:var(--muted);cursor:help" id="tip-fp-yahoo-url" title="">ⓘ</span></label>
+          <input type="text" id="cfg-fp-yahoo-url" class="inp" placeholder="https://query1.finance.yahoo.com/…/{ticker}…">
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="sh" style="color:var(--green)" data-i18n="settings.localDataSection">Datos Locales</div>
         <div data-i18n-html="settings.storageInfo" style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6">
           Prefix: <code style="color:var(--cyan)">sfv1:</code> — exportable a JSON.
         </div>

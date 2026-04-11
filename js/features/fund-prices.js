@@ -8,30 +8,40 @@
 var FundPrices = {
   // ── Runtime config (reads SK.config so values are always current) ──────────
   // Defaults and proxy names are editable in Settings → Precios de Mercado.
+  _CMF_URL_DEFAULT:   'https://api.cmfchile.cl/api-sbifv3/recursos/fondos-mutuos/{run}/series/valores-cuota',
+  _YAHOO_URL_DEFAULT: 'https://query1.finance.yahoo.com/v8/finance/chart/{ticker}?interval=1d&range=5d',
+
   _cfg: function() {
     var c = Store.get(SK.config, {});
     return {
-      ttlShort: (c.fundPricesTtlShort != null ? +c.fundPricesTtlShort : 15)  * 60 * 1000,
-      ttlLong:  (c.fundPricesTtlLong  != null ? +c.fundPricesTtlLong  : 240) * 60 * 1000,
-      stagger:  (c.fundPricesStagger  != null ? +c.fundPricesStagger  : 300),
-      timeout:  (c.fundPricesTimeout  != null ? +c.fundPricesTimeout  : 12)  * 1000,
-      proxy1:   c.fundPricesProxy1 || 'corsproxy.io',
-      proxy2:   c.fundPricesProxy2 || 'allorigins.win'
+      ttlShort:      (c.fundPricesTtlShort != null ? +c.fundPricesTtlShort : 15)  * 60 * 1000,
+      ttlLong:       (c.fundPricesTtlLong  != null ? +c.fundPricesTtlLong  : 240) * 60 * 1000,
+      stagger:       (c.fundPricesStagger  != null ? +c.fundPricesStagger  : 300),
+      timeout:       (c.fundPricesTimeout  != null ? +c.fundPricesTimeout  : 12)  * 1000,
+      proxy1:        c.fundPricesProxy1        || 'corsproxy.io',
+      proxy2:        c.fundPricesProxy2        || 'allorigins.win',
+      cmfUrl:        c.fundPricesCmfUrl        || this._CMF_URL_DEFAULT,
+      yahooUrl:      c.fundPricesYahooUrl      || this._YAHOO_URL_DEFAULT,
+      cmfHeaderName: c.fundPricesCmfHeaderName || '',
+      cmfHeaderVal:  c.fundPricesCmfHeaderVal  || ''
     };
   },
 
   // ── CORS proxy adapters ────────────────────────────────────
-  // Each adapter is (url, timeoutMs) → Promise<parsedJSON>.
+  // Each adapter is (url, timeoutMs, headers?) → Promise<parsedJSON>.
   // Response formats differ per proxy; adapters handle that internally.
+  // The optional `headers` object is forwarded to the upstream API where supported.
   _PROXIES: {
-    // corsproxy.io — passes response through directly; no wrapper
-    'corsproxy.io': async function(url, ms) {
-      var r = await fetch('https://corsproxy.io/?url=' + encodeURIComponent(url),
-                          {signal: AbortSignal.timeout(ms)});
+    // corsproxy.io — passes response through directly; forwards custom headers
+    'corsproxy.io': async function(url, ms, headers) {
+      var opts = {signal: AbortSignal.timeout(ms)};
+      if (headers && Object.keys(headers).length) opts.headers = headers;
+      var r = await fetch('https://corsproxy.io/?url=' + encodeURIComponent(url), opts);
       if (!r.ok) throw new Error('HTTP ' + r.status);
       return r.json();
     },
     // allorigins.win — wraps response: { contents: "<json_string>", status: {...} }
+    // Note: custom headers are not forwarded by this proxy.
     'allorigins.win': async function(url, ms) {
       var r = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(url),
                           {signal: AbortSignal.timeout(ms)});
@@ -40,10 +50,11 @@ var FundPrices = {
       if (!w || !w.contents) throw new Error('empty contents');
       return JSON.parse(w.contents);
     },
-    // cors-anywhere — prepends its base URL; passes response through directly
-    'cors-anywhere': async function(url, ms) {
-      var r = await fetch('https://cors-anywhere.herokuapp.com/' + url,
-                          {signal: AbortSignal.timeout(ms)});
+    // cors-anywhere — prepends its base URL; forwards custom headers
+    'cors-anywhere': async function(url, ms, headers) {
+      var opts = {signal: AbortSignal.timeout(ms)};
+      if (headers && Object.keys(headers).length) opts.headers = headers;
+      var r = await fetch('https://cors-anywhere.herokuapp.com/' + url, opts);
       if (!r.ok) throw new Error('HTTP ' + r.status);
       return r.json();
     }
@@ -65,7 +76,8 @@ var FundPrices = {
 
   // ── CORS proxy fetch ───────────────────────────────────────
   // Tries proxy1; on failure falls back to proxy2 (if different).
-  _proxyFetch: async function(url) {
+  // Optional `headers` object is forwarded to the upstream API where the proxy supports it.
+  _proxyFetch: async function(url, headers) {
     var cfg  = this._cfg();
     var ms   = cfg.timeout;
     var p1   = this._PROXIES[cfg.proxy1];
@@ -73,25 +85,27 @@ var FundPrices = {
     if (!p1) throw new Error('Unknown proxy: ' + cfg.proxy1);
     Debug.req('FundPrices [' + cfg.proxy1 + '] → ' + url.slice(0, 60) + '… (timeout ' + (ms / 1000) + 's)');
     try {
-      var result = await p1(url, ms);
+      var result = await p1(url, ms, headers);
       Debug.res(cfg.proxy1 + ' OK');
       return result;
     } catch(e1) {
       if (!p2 || cfg.proxy1 === cfg.proxy2) throw e1;
       Debug.warn(cfg.proxy1 + ' failed (' + e1.message + '), trying ' + cfg.proxy2);
-      var result2 = await p2(url, ms);
+      var result2 = await p2(url, ms, headers);
       Debug.res(cfg.proxy2 + ' OK');
       return result2;
     }
   },
 
   // ── Source: CMF Chile ──────────────────────────────────────
-  // Endpoint: /fondos-mutuos/{run}/series/valores-cuota
+  // Endpoint: configurable via fundPricesCmfUrl; uses {run} as placeholder.
   // Response: array of { fecha, valor_cuota } — Chilean decimal (comma)
   _fetchCmf: async function(runCmf) {
-    var url = 'https://api.cmfchile.cl/api-sbifv3/recursos/fondos-mutuos/' +
-              runCmf + '/series/valores-cuota';
-    var raw = await this._proxyFetch(url);
+    var cfg = this._cfg();
+    var url = cfg.cmfUrl.replace('{run}', encodeURIComponent(runCmf));
+    var headers = {};
+    if (cfg.cmfHeaderName && cfg.cmfHeaderVal) headers[cfg.cmfHeaderName] = cfg.cmfHeaderVal;
+    var raw = await this._proxyFetch(url, Object.keys(headers).length ? headers : undefined);
 
     // Normalize: response may be a bare array or wrapped { valores_cuota: [...] }
     var rows = Array.isArray(raw)
@@ -130,11 +144,11 @@ var FundPrices = {
   },
 
   // ── Source: Yahoo Finance ──────────────────────────────────
-  // Endpoint: /v8/finance/chart/{ticker}?interval=1d&range=5d
+  // Endpoint: configurable via fundPricesYahooUrl; uses {ticker} as placeholder.
   // Extracts regularMarketPrice + 1-day return from close series
   _fetchYahoo: async function(ticker) {
-    var url = 'https://query1.finance.yahoo.com/v8/finance/chart/' +
-              ticker + '?interval=1d&range=5d';
+    var cfg = this._cfg();
+    var url = cfg.yahooUrl.replace('{ticker}', encodeURIComponent(ticker));
     var raw = await this._proxyFetch(url);
 
     var result = raw.chart && raw.chart.result && raw.chart.result[0];

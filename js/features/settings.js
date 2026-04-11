@@ -10,7 +10,8 @@ var Settings = {
 
   // Defaults for fund price fetching — kept in sync with FundPrices._cfg()
   _FP_DEFAULTS: { ttlShort: 15, ttlLong: 240, stagger: 300, timeout: 12,
-                  proxy1: 'corsproxy.io', proxy2: 'allorigins.win' },
+                  proxy1: 'corsproxy.io', proxy2: 'allorigins.win',
+                  cmfHeaderName: 'apikey', cmfHeaderVal: '' },
 
   load: function() {
     var cfg = Store.get(SK.config, {});
@@ -40,10 +41,18 @@ var Settings = {
     var svSel = function(id, v) { var e = document.getElementById(id); if (e) e.value = v; };
     svSel('cfg-fp-proxy1', cfg.fundPricesProxy1 || d.proxy1);
     svSel('cfg-fp-proxy2', cfg.fundPricesProxy2 || d.proxy2);
+    // API sources config
+    var fp = typeof FundPrices !== 'undefined' ? FundPrices : {};
+    sv('cfg-fp-cmf-url',         cfg.fundPricesCmfUrl   || (fp._CMF_URL_DEFAULT   || ''));
+    sv('cfg-fp-yahoo-url',       cfg.fundPricesYahooUrl || (fp._YAHOO_URL_DEFAULT  || ''));
+    sv('cfg-fp-cmf-header-name', cfg.fundPricesCmfHeaderName != null ? cfg.fundPricesCmfHeaderName : d.cmfHeaderName);
+    sv('cfg-fp-cmf-header-val',  cfg.fundPricesCmfHeaderVal  != null ? cfg.fundPricesCmfHeaderVal  : d.cmfHeaderVal);
     var tips = {
-      'tip-fp-ttl-short': 'fpHintTtlShort', 'tip-fp-ttl-long': 'fpHintTtlLong',
-      'tip-fp-stagger':   'fpHintStagger',   'tip-fp-timeout':  'fpHintTimeout',
-      'tip-fp-proxy1':    'fpHintProxy',     'tip-fp-proxy2':   'fpHintProxy'
+      'tip-fp-ttl-short':      'fpHintTtlShort',   'tip-fp-ttl-long':         'fpHintTtlLong',
+      'tip-fp-stagger':        'fpHintStagger',     'tip-fp-timeout':          'fpHintTimeout',
+      'tip-fp-proxy1':         'fpHintProxy',       'tip-fp-proxy2':           'fpHintProxy',
+      'tip-fp-cmf-url':        'fpHintCmfUrl',      'tip-fp-yahoo-url':        'fpHintYahooUrl',
+      'tip-fp-cmf-header':     'fpHintCmfHeader',   'tip-fp-cmf-header-val':   'fpHintCmfHeaderVal'
     };
     Object.keys(tips).forEach(function(id) {
       var el = document.getElementById(id);
@@ -55,19 +64,25 @@ var Settings = {
 
   save: function() {
     var d = this._FP_DEFAULTS;
-    var fp = function(id, def) { var v = parseFloat(document.getElementById(id).value); return isNaN(v) ? def : v; };
+    var fpa = typeof FundPrices !== 'undefined' ? FundPrices : {};
+    var num = function(id, def) { var v = parseFloat(document.getElementById(id).value); return isNaN(v) ? def : v; };
+    var str = function(id, def) { var e = document.getElementById(id); return e ? (e.value.trim() || def) : def; };
     Store.set(SK.config, {
-      salary:              parseFloat(document.getElementById('cfg-salary').value) || 0,
-      pctNeeds:            parseFloat(document.getElementById('cfg-needs').value)  || 50,
-      pctWants:            parseFloat(document.getElementById('cfg-wants').value)  || 10,
-      propCommission:      parseFloat(document.getElementById('cfg-commission').value) || 10,
-      primaryCurrency:     document.getElementById('cfg-primary-currency').value || 'CLP',
-      fundPricesTtlShort:  fp('cfg-fp-ttl-short', d.ttlShort),
-      fundPricesTtlLong:   fp('cfg-fp-ttl-long',  d.ttlLong),
-      fundPricesStagger:   fp('cfg-fp-stagger',   d.stagger),
-      fundPricesTimeout:   fp('cfg-fp-timeout',   d.timeout),
-      fundPricesProxy1:    document.getElementById('cfg-fp-proxy1').value || d.proxy1,
-      fundPricesProxy2:    document.getElementById('cfg-fp-proxy2').value || d.proxy2
+      salary:                    parseFloat(document.getElementById('cfg-salary').value) || 0,
+      pctNeeds:                  parseFloat(document.getElementById('cfg-needs').value)  || 50,
+      pctWants:                  parseFloat(document.getElementById('cfg-wants').value)  || 10,
+      propCommission:            parseFloat(document.getElementById('cfg-commission').value) || 10,
+      primaryCurrency:           document.getElementById('cfg-primary-currency').value || 'CLP',
+      fundPricesTtlShort:        num('cfg-fp-ttl-short', d.ttlShort),
+      fundPricesTtlLong:         num('cfg-fp-ttl-long',  d.ttlLong),
+      fundPricesStagger:         num('cfg-fp-stagger',   d.stagger),
+      fundPricesTimeout:         num('cfg-fp-timeout',   d.timeout),
+      fundPricesProxy1:          document.getElementById('cfg-fp-proxy1').value || d.proxy1,
+      fundPricesProxy2:          document.getElementById('cfg-fp-proxy2').value || d.proxy2,
+      fundPricesCmfUrl:          str('cfg-fp-cmf-url',         fpa._CMF_URL_DEFAULT   || ''),
+      fundPricesYahooUrl:        str('cfg-fp-yahoo-url',       fpa._YAHOO_URL_DEFAULT || ''),
+      fundPricesCmfHeaderName:   (function(){ var e = document.getElementById('cfg-fp-cmf-header-name'); return e ? e.value.trim() : d.cmfHeaderName; })(),
+      fundPricesCmfHeaderVal:    (function(){ var e = document.getElementById('cfg-fp-cmf-header-val');  return e ? e.value.trim() : d.cmfHeaderVal;  })()
     });
     Debug.info('Settings saved');
     alert(I18n.t('settings.savedAlert'));
