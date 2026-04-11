@@ -7,16 +7,46 @@
 // ============================================================
 var FundPrices = {
   // ── Runtime config (reads SK.config so values are always current) ──────────
-  // Defaults:  ttlShort=15min  ttlLong=240min  stagger=300ms  timeout=12s
-  // All four are editable in Settings → Precios de Mercado.
+  // Defaults and proxy names are editable in Settings → Precios de Mercado.
   _cfg: function() {
     var c = Store.get(SK.config, {});
     return {
       ttlShort: (c.fundPricesTtlShort != null ? +c.fundPricesTtlShort : 15)  * 60 * 1000,
       ttlLong:  (c.fundPricesTtlLong  != null ? +c.fundPricesTtlLong  : 240) * 60 * 1000,
       stagger:  (c.fundPricesStagger  != null ? +c.fundPricesStagger  : 300),
-      timeout:  (c.fundPricesTimeout  != null ? +c.fundPricesTimeout  : 12)  * 1000
+      timeout:  (c.fundPricesTimeout  != null ? +c.fundPricesTimeout  : 12)  * 1000,
+      proxy1:   c.fundPricesProxy1 || 'corsproxy.io',
+      proxy2:   c.fundPricesProxy2 || 'allorigins.win'
     };
+  },
+
+  // ── CORS proxy adapters ────────────────────────────────────
+  // Each adapter is (url, timeoutMs) → Promise<parsedJSON>.
+  // Response formats differ per proxy; adapters handle that internally.
+  _PROXIES: {
+    // corsproxy.io — passes response through directly; no wrapper
+    'corsproxy.io': async function(url, ms) {
+      var r = await fetch('https://corsproxy.io/?url=' + encodeURIComponent(url),
+                          {signal: AbortSignal.timeout(ms)});
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    },
+    // allorigins.win — wraps response: { contents: "<json_string>", status: {...} }
+    'allorigins.win': async function(url, ms) {
+      var r = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(url),
+                          {signal: AbortSignal.timeout(ms)});
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      var w = await r.json();
+      if (!w || !w.contents) throw new Error('empty contents');
+      return JSON.parse(w.contents);
+    },
+    // cors-anywhere — prepends its base URL; passes response through directly
+    'cors-anywhere': async function(url, ms) {
+      var r = await fetch('https://cors-anywhere.herokuapp.com/' + url,
+                          {signal: AbortSignal.timeout(ms)});
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }
   },
 
   // ── Cache helpers ──────────────────────────────────────────
@@ -34,30 +64,24 @@ var FundPrices = {
   },
 
   // ── CORS proxy fetch ───────────────────────────────────────
-  // Primary:  allorigins.win wraps response in { contents: "<json_string>" }
-  // Fallback: cors-anywhere passes response through directly
+  // Tries proxy1; on failure falls back to proxy2 (if different).
   _proxyFetch: async function(url) {
-    var ms = this._cfg().timeout;
-    Debug.req('FundPrices → ' + url.slice(0, 70) + '… (timeout ' + (ms / 1000) + 's)');
+    var cfg  = this._cfg();
+    var ms   = cfg.timeout;
+    var p1   = this._PROXIES[cfg.proxy1];
+    var p2   = this._PROXIES[cfg.proxy2];
+    if (!p1) throw new Error('Unknown proxy: ' + cfg.proxy1);
+    Debug.req('FundPrices [' + cfg.proxy1 + '] → ' + url.slice(0, 60) + '… (timeout ' + (ms / 1000) + 's)');
     try {
-      var r = await fetch(
-        'https://api.allorigins.win/get?url=' + encodeURIComponent(url),
-        {signal: AbortSignal.timeout(ms)}
-      );
-      if (!r.ok) throw new Error('allorigins HTTP ' + r.status);
-      var wrapper = await r.json();
-      if (!wrapper || !wrapper.contents) throw new Error('allorigins: empty contents');
-      var parsed = JSON.parse(wrapper.contents);
-      Debug.res('allorigins OK');
-      return parsed;
+      var result = await p1(url, ms);
+      Debug.res(cfg.proxy1 + ' OK');
+      return result;
     } catch(e1) {
-      Debug.warn('allorigins failed (' + e1.message + '), trying cors-anywhere');
-      var r2 = await fetch(
-        'https://cors-anywhere.herokuapp.com/' + url,
-        {signal: AbortSignal.timeout(ms)}
-      );
-      if (!r2.ok) throw new Error('cors-anywhere HTTP ' + r2.status);
-      return await r2.json();
+      if (!p2 || cfg.proxy1 === cfg.proxy2) throw e1;
+      Debug.warn(cfg.proxy1 + ' failed (' + e1.message + '), trying ' + cfg.proxy2);
+      var result2 = await p2(url, ms);
+      Debug.res(cfg.proxy2 + ' OK');
+      return result2;
     }
   },
 

@@ -9,7 +9,8 @@ var Settings = {
   },
 
   // Defaults for fund price fetching — kept in sync with FundPrices._cfg()
-  _FP_DEFAULTS: { ttlShort: 15, ttlLong: 240, stagger: 300, timeout: 12 },
+  _FP_DEFAULTS: { ttlShort: 15, ttlLong: 240, stagger: 300, timeout: 12,
+                  proxy1: 'corsproxy.io', proxy2: 'allorigins.win' },
 
   load: function() {
     var cfg = Store.get(SK.config, {});
@@ -36,9 +37,13 @@ var Settings = {
     sv('cfg-fp-stagger',   cfg.fundPricesStagger   != null ? cfg.fundPricesStagger  : d.stagger);
     sv('cfg-fp-timeout',   cfg.fundPricesTimeout   != null ? cfg.fundPricesTimeout  : d.timeout);
     // Apply tooltips from i18n (rendered after locale is applied)
+    var svSel = function(id, v) { var e = document.getElementById(id); if (e) e.value = v; };
+    svSel('cfg-fp-proxy1', cfg.fundPricesProxy1 || d.proxy1);
+    svSel('cfg-fp-proxy2', cfg.fundPricesProxy2 || d.proxy2);
     var tips = {
       'tip-fp-ttl-short': 'fpHintTtlShort', 'tip-fp-ttl-long': 'fpHintTtlLong',
-      'tip-fp-stagger':   'fpHintStagger',   'tip-fp-timeout':  'fpHintTimeout'
+      'tip-fp-stagger':   'fpHintStagger',   'tip-fp-timeout':  'fpHintTimeout',
+      'tip-fp-proxy1':    'fpHintProxy',     'tip-fp-proxy2':   'fpHintProxy'
     };
     Object.keys(tips).forEach(function(id) {
       var el = document.getElementById(id);
@@ -60,7 +65,9 @@ var Settings = {
       fundPricesTtlShort:  fp('cfg-fp-ttl-short', d.ttlShort),
       fundPricesTtlLong:   fp('cfg-fp-ttl-long',  d.ttlLong),
       fundPricesStagger:   fp('cfg-fp-stagger',   d.stagger),
-      fundPricesTimeout:   fp('cfg-fp-timeout',   d.timeout)
+      fundPricesTimeout:   fp('cfg-fp-timeout',   d.timeout),
+      fundPricesProxy1:    document.getElementById('cfg-fp-proxy1').value || d.proxy1,
+      fundPricesProxy2:    document.getElementById('cfg-fp-proxy2').value || d.proxy2
     });
     Debug.info('Settings saved');
     alert(I18n.t('settings.savedAlert'));
