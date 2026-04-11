@@ -7,25 +7,46 @@ var MarketData = {
   usd: null, uf: null, btc: null, eur: null,
   _rates: {},   // CLP per 1 unit of each currency
 
+  _MINDICADOR_URL_DEFAULT:   'https://mindicador.cl/api',
+  _EXCHANGERATE_URL_DEFAULT: 'https://api.exchangerate-api.com/v4/latest/USD',
+  _COINGECKO_URL_DEFAULT:    'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=clp',
+
+  _cfg: function() {
+    var c = Store.get(SK.config, {});
+    return {
+      timeout:              (c.marketTimeout != null ? +c.marketTimeout : 8) * 1000,
+      mindicadorUrl:        c.marketMindicadorUrl    || this._MINDICADOR_URL_DEFAULT,
+      exchangeRateUrl:      c.marketExchangeRateUrl  || this._EXCHANGERATE_URL_DEFAULT,
+      coinGeckoUrl:         c.marketCoinGeckoUrl     || this._COINGECKO_URL_DEFAULT,
+      mindicadorEnabled:    c.marketMindicadorEnabled    !== false,
+      exchangeRateEnabled:  c.marketExchangeRateEnabled  !== false,
+      coinGeckoEnabled:     c.marketCoinGeckoEnabled     !== false
+    };
+  },
+
   fetch: async function() {
+    var cfg = this._cfg();
+
     // ── 1. mindicador.cl — USD, EUR, UF ──
-    Debug.req('MarketData: mindicador.cl');
-    try {
-      var r = await fetch('https://mindicador.cl/api', {signal: AbortSignal.timeout(8000)});
-      var d = await r.json();
-      this.usd = d.dolar && d.dolar.valor;
-      this.uf  = d.uf  && d.uf.valor;
-      this.eur = d.euro && d.euro.valor;
-      Debug.res('mindicador OK — USD=' + this.usd + ' UF=' + this.uf + ' EUR=' + this.eur);
-    } catch(e) { Debug.err('mindicador: ' + e.message); }
+    if (cfg.mindicadorEnabled) {
+      Debug.req('MarketData: mindicador.cl');
+      try {
+        var r = await fetch(cfg.mindicadorUrl, {signal: AbortSignal.timeout(cfg.timeout)});
+        var d = await r.json();
+        this.usd = d.dolar && d.dolar.valor;
+        this.uf  = d.uf  && d.uf.valor;
+        this.eur = d.euro && d.euro.valor;
+        Debug.res('mindicador OK — USD=' + this.usd + ' UF=' + this.uf + ' EUR=' + this.eur);
+      } catch(e) { Debug.err('mindicador: ' + e.message); }
+    } else { Debug.info('MarketData: mindicador deshabilitado'); }
 
     // ── 2. exchangerate-api — cross rates relative to USD ──
     // Response: { rates: { EUR: 0.92, JPY: 150, GBP: 0.78, CLP: 950, ... } }
     // CLP per 1 X = (CLP per USD) / (X per USD from api)
-    if (this.usd) {
+    if (cfg.exchangeRateEnabled && this.usd) {
       Debug.req('MarketData: exchangerate-api');
       try {
-        var r3 = await fetch('https://api.exchangerate-api.com/v4/latest/USD', {signal: AbortSignal.timeout(8000)});
+        var r3 = await fetch(cfg.exchangeRateUrl, {signal: AbortSignal.timeout(cfg.timeout)});
         var d3 = await r3.json();
         if (d3 && d3.rates) {
           var clp = this.usd;
@@ -49,14 +70,16 @@ var MarketData = {
           }).join(' '));
         }
       } catch(e) { Debug.warn('exchangerate-api: ' + e.message); }
-    }
+    } else if (!cfg.exchangeRateEnabled) { Debug.info('MarketData: exchangerate-api deshabilitado'); }
 
     // ── 3. CoinGecko — BTC ──
-    try {
-      var r2 = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=clp', {signal: AbortSignal.timeout(8000)});
-      var d2 = await r2.json();
-      this.btc = d2 && d2.bitcoin && d2.bitcoin.clp;
-    } catch(e) { Debug.warn('CoinGecko: ' + e.message); }
+    if (cfg.coinGeckoEnabled) {
+      try {
+        var r2 = await fetch(cfg.coinGeckoUrl, {signal: AbortSignal.timeout(cfg.timeout)});
+        var d2 = await r2.json();
+        this.btc = d2 && d2.bitcoin && d2.bitcoin.clp;
+      } catch(e) { Debug.warn('CoinGecko: ' + e.message); }
+    } else { Debug.info('MarketData: CoinGecko deshabilitado'); }
 
     // ── Fallback to cache if live fetches failed ──
     var c = Store.get(SK.cMarket, {});

@@ -13,6 +13,9 @@ var Settings = {
                   proxy1: 'corsproxy.io', proxy2: 'allorigins.win',
                   cmfFormat: 'JSON' },
 
+  // Defaults for market data fetching — kept in sync with MarketData._cfg()
+  _MD_DEFAULTS: { timeout: 8 },
+
   load: function() {
     var cfg = Store.get(SK.config, {});
     var sv  = function(id, v) { var e = document.getElementById(id); if (e) e.value = v != null ? v : ''; };
@@ -55,6 +58,17 @@ var Settings = {
     sc('cfg-fp-cmf-enabled',     cfg.fundPricesCmfEnabled     !== false);
     sc('cfg-fp-yahoo-enabled',   cfg.fundPricesYahooEnabled   !== false);
     sc('cfg-fp-fintual-enabled', cfg.fundPricesFintualEnabled !== false);
+
+    // Market data sources config
+    var md = typeof MarketData !== 'undefined' ? MarketData : {};
+    var mdd = this._MD_DEFAULTS;
+    sv('cfg-md-timeout',         cfg.marketTimeout != null ? cfg.marketTimeout : mdd.timeout);
+    sv('cfg-md-mindicador-url',  cfg.marketMindicadorUrl   || (md._MINDICADOR_URL_DEFAULT   || ''));
+    sv('cfg-md-exchangerate-url',cfg.marketExchangeRateUrl || (md._EXCHANGERATE_URL_DEFAULT || ''));
+    sv('cfg-md-coingecko-url',   cfg.marketCoinGeckoUrl    || (md._COINGECKO_URL_DEFAULT    || ''));
+    sc('cfg-md-mindicador-enabled',   cfg.marketMindicadorEnabled   !== false);
+    sc('cfg-md-exchangerate-enabled', cfg.marketExchangeRateEnabled !== false);
+    sc('cfg-md-coingecko-enabled',    cfg.marketCoinGeckoEnabled    !== false);
 
     var tips = {
       'tip-fp-ttl-short':    'fpHintTtlShort',  'tip-fp-ttl-long':    'fpHintTtlLong',
@@ -101,7 +115,15 @@ var Settings = {
       // Enabled flags
       fundPricesCmfEnabled:     chk('cfg-fp-cmf-enabled'),
       fundPricesYahooEnabled:   chk('cfg-fp-yahoo-enabled'),
-      fundPricesFintualEnabled: chk('cfg-fp-fintual-enabled')
+      fundPricesFintualEnabled: chk('cfg-fp-fintual-enabled'),
+      // Market data sources
+      marketTimeout:              num('cfg-md-timeout', this._MD_DEFAULTS.timeout),
+      marketMindicadorUrl:        str('cfg-md-mindicador-url',   (typeof MarketData !== 'undefined' ? MarketData._MINDICADOR_URL_DEFAULT   : '')),
+      marketExchangeRateUrl:      str('cfg-md-exchangerate-url', (typeof MarketData !== 'undefined' ? MarketData._EXCHANGERATE_URL_DEFAULT : '')),
+      marketCoinGeckoUrl:         str('cfg-md-coingecko-url',    (typeof MarketData !== 'undefined' ? MarketData._COINGECKO_URL_DEFAULT    : '')),
+      marketMindicadorEnabled:    chk('cfg-md-mindicador-enabled'),
+      marketExchangeRateEnabled:  chk('cfg-md-exchangerate-enabled'),
+      marketCoinGeckoEnabled:     chk('cfg-md-coingecko-enabled')
     });
     Debug.info('Settings saved');
     alert(I18n.t('settings.savedAlert'));

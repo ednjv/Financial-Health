@@ -229,6 +229,58 @@
           <input type="text" id="cfg-fp-fintual-url" class="inp" placeholder="https://fintual.cl/api/real_assets/{id}/days">
         </div>
       </div>
+
+      <!-- ── Market Data APIs ── -->
+      <div class="card" style="margin-bottom:14px">
+        <div class="sh" style="color:var(--cyan)">Indicadores de Mercado</div>
+
+        <div class="fr" style="margin-bottom:10px">
+          <div class="fg">
+            <label class="fl">Timeout de conexión (s)</label>
+            <input type="number" id="cfg-md-timeout" class="inp" placeholder="8" min="3" max="60">
+          </div>
+        </div>
+
+        <!-- mindicador.cl -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;padding-top:8px;border-top:1px solid var(--border)">
+          <span style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--amber);font-family:var(--mono);font-weight:700">mindicador.cl</span>
+          <div style="display:flex;align-items:center;gap:7px">
+            <span style="font-size:10px;color:var(--muted);font-family:var(--mono)" data-i18n="settings.apiActive">Activo</span>
+            <label class="tog"><input type="checkbox" id="cfg-md-mindicador-enabled"><span class="tog-sl"></span></label>
+          </div>
+        </div>
+        <div class="fg" style="margin-bottom:10px">
+          <label class="fl">URL API mindicador</label>
+          <input type="text" id="cfg-md-mindicador-url" class="inp" placeholder="https://mindicador.cl/api">
+        </div>
+
+        <!-- exchangerate-api -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;padding-top:8px;border-top:1px solid var(--border)">
+          <span style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--cyan);font-family:var(--mono);font-weight:700">exchangerate-api</span>
+          <div style="display:flex;align-items:center;gap:7px">
+            <span style="font-size:10px;color:var(--muted);font-family:var(--mono)" data-i18n="settings.apiActive">Activo</span>
+            <label class="tog"><input type="checkbox" id="cfg-md-exchangerate-enabled"><span class="tog-sl"></span></label>
+          </div>
+        </div>
+        <div class="fg" style="margin-bottom:10px">
+          <label class="fl">URL API exchangerate</label>
+          <input type="text" id="cfg-md-exchangerate-url" class="inp" placeholder="https://api.exchangerate-api.com/v4/latest/USD">
+        </div>
+
+        <!-- CoinGecko -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;padding-top:8px;border-top:1px solid var(--border)">
+          <span style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--green);font-family:var(--mono);font-weight:700">CoinGecko</span>
+          <div style="display:flex;align-items:center;gap:7px">
+            <span style="font-size:10px;color:var(--muted);font-family:var(--mono)" data-i18n="settings.apiActive">Activo</span>
+            <label class="tog"><input type="checkbox" id="cfg-md-coingecko-enabled"><span class="tog-sl"></span></label>
+          </div>
+        </div>
+        <div class="fg">
+          <label class="fl">URL API CoinGecko</label>
+          <input type="text" id="cfg-md-coingecko-url" class="inp" placeholder="https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&amp;vs_currencies=clp">
+        </div>
+      </div>
+
       <div class="card" style="margin-bottom:14px">
         <div class="sh" style="color:var(--green)" data-i18n="settings.localDataSection">Datos Locales</div>
         <div data-i18n-html="settings.storageInfo" style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6">
