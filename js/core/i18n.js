@@ -91,7 +91,13 @@ var I18n = {
           noSnaps: 'Sin snapshots para {{month}}.',
           hint: 'Usa ◀ ▶ para navegar o + Snapshot para agregar.'
         },
-        confirm: { deleteSnap: 'Eliminar snapshot?', deleteFund: 'Eliminar fondo?' }
+        confirm: { deleteSnap: 'Eliminar snapshot?', deleteFund: 'Eliminar fondo?' },
+        livePrices: {
+          title: 'Precios actuales',
+          fund: 'Fondo', source: 'Fuente', price: 'Precio', change: 'Var. 1d',
+          loading: 'Actualizando…', noFunds: '',
+          stale: 'datos anteriores', refreshTitle: 'Actualizar precios de mercado'
+        }
       },
       properties: {
         title: 'Propiedades',
@@ -207,6 +213,15 @@ var I18n = {
         labelWants: '% Deseos', labelCommission: 'Comisión admin. propiedades (%)',
         labelPrimaryCurrency: 'Moneda principal',
         savings: 'Ahorro:',
+        marketPricesSection: 'Precios de Mercado',
+        labelFpTtlShort: 'Caché cotizaciones (min)',
+        labelFpTtlLong:  'Caché fondos CMF (min)',
+        labelFpStagger:  'Retraso entre peticiones (ms)',
+        labelFpTimeout:  'Timeout de conexión (s)',
+        fpHintTtlShort:  'Tiempo antes de re-consultar Yahoo / Alpha Vantage / Morningstar. Por defecto 15 min.',
+        fpHintTtlLong:   'Tiempo antes de re-consultar CMF Chile (publica una vez al día). Por defecto 240 min.',
+        fpHintStagger:   'Espera entre requests al proxy para no saturarlo. Por defecto 300 ms.',
+        fpHintTimeout:   'Tiempo máximo de espera por respuesta del proxy. Por defecto 12 s.',
         storageInfo: 'Prefix: <code style="color:var(--cyan)">sfv1:</code> — exportable a JSON.',
         exportBtn: 'Export JSON', importBtn: 'Import JSON', clearBtn: 'Borrar Todo',
         saveBtn: 'Guardar Configuración', savedAlert: 'Configuración guardada',
@@ -287,7 +302,13 @@ var I18n = {
           noSnaps: 'No snapshots for {{month}}.',
           hint: 'Use ◀ ▶ to navigate or + Snapshot to add.'
         },
-        confirm: { deleteSnap: 'Delete snapshot?', deleteFund: 'Delete fund?' }
+        confirm: { deleteSnap: 'Delete snapshot?', deleteFund: 'Delete fund?' },
+        livePrices: {
+          title: 'Live prices',
+          fund: 'Fund', source: 'Source', price: 'Price', change: '1d change',
+          loading: 'Refreshing…', noFunds: '',
+          stale: 'stale data', refreshTitle: 'Refresh market prices'
+        }
       },
       properties: {
         title: 'Properties',
@@ -403,6 +424,15 @@ var I18n = {
         labelWants: '% Wants', labelCommission: 'Property mgmt commission (%)',
         labelPrimaryCurrency: 'Primary currency',
         savings: 'Savings:',
+        marketPricesSection: 'Market Prices',
+        labelFpTtlShort: 'Quotes cache (min)',
+        labelFpTtlLong:  'CMF funds cache (min)',
+        labelFpStagger:  'Request delay (ms)',
+        labelFpTimeout:  'Connection timeout (s)',
+        fpHintTtlShort:  'Time before re-querying Yahoo / Alpha Vantage / Morningstar. Default 15 min.',
+        fpHintTtlLong:   'Time before re-querying CMF Chile (publishes once per day). Default 240 min.',
+        fpHintStagger:   'Delay between proxy requests to avoid throttling. Default 300 ms.',
+        fpHintTimeout:   'Maximum wait time for proxy response. Default 12 s.',
         storageInfo: 'Prefix: <code style="color:var(--cyan)">sfv1:</code> — exportable to JSON.',
         exportBtn: 'Export JSON', importBtn: 'Import JSON', clearBtn: 'Clear All',
         saveBtn: 'Save Settings', savedAlert: 'Settings saved',

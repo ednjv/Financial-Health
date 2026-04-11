@@ -8,12 +8,15 @@ var Settings = {
     return Store.get(SK.config, {}).primaryCurrency || 'CLP';
   },
 
+  // Defaults for fund price fetching — kept in sync with FundPrices._cfg()
+  _FP_DEFAULTS: { ttlShort: 15, ttlLong: 240, stagger: 300, timeout: 12 },
+
   load: function() {
     var cfg = Store.get(SK.config, {});
     var sv = function(id, v) { var e = document.getElementById(id); if (e) e.value = v || ''; };
     sv('cfg-salary',     cfg.salary || '');
-    sv('cfg-needs',      cfg.pctNeeds     != null ? cfg.pctNeeds     : 50);
-    sv('cfg-wants',      cfg.pctWants     != null ? cfg.pctWants     : 10);
+    sv('cfg-needs',      cfg.pctNeeds      != null ? cfg.pctNeeds      : 50);
+    sv('cfg-wants',      cfg.pctWants      != null ? cfg.pctWants      : 10);
     sv('cfg-commission', cfg.propCommission != null ? cfg.propCommission : 10);
     this.calcSavings();
     var psel = document.getElementById('cfg-primary-currency');
@@ -26,17 +29,38 @@ var Settings = {
       });
     }
     if (psel) psel.value = cfg.primaryCurrency || 'CLP';
+    // Fund-price tuning params
+    var d = this._FP_DEFAULTS;
+    sv('cfg-fp-ttl-short', cfg.fundPricesTtlShort != null ? cfg.fundPricesTtlShort : d.ttlShort);
+    sv('cfg-fp-ttl-long',  cfg.fundPricesTtlLong  != null ? cfg.fundPricesTtlLong  : d.ttlLong);
+    sv('cfg-fp-stagger',   cfg.fundPricesStagger   != null ? cfg.fundPricesStagger  : d.stagger);
+    sv('cfg-fp-timeout',   cfg.fundPricesTimeout   != null ? cfg.fundPricesTimeout  : d.timeout);
+    // Apply tooltips from i18n (rendered after locale is applied)
+    var tips = {
+      'tip-fp-ttl-short': 'fpHintTtlShort', 'tip-fp-ttl-long': 'fpHintTtlLong',
+      'tip-fp-stagger':   'fpHintStagger',   'tip-fp-timeout':  'fpHintTimeout'
+    };
+    Object.keys(tips).forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.title = I18n.t('settings.' + tips[id]);
+    });
     var stats = document.getElementById('cfg-storage-stats');
     if (stats) stats.textContent = I18n.t('settings.storageUsed') + ' ' + Store.size() + ' | ' + I18n.t('settings.storageKeys') + ' ' + Store.keys().length;
   },
 
   save: function() {
+    var d = this._FP_DEFAULTS;
+    var fp = function(id, def) { var v = parseFloat(document.getElementById(id).value); return isNaN(v) ? def : v; };
     Store.set(SK.config, {
-      salary:          parseFloat(document.getElementById('cfg-salary').value) || 0,
-      pctNeeds:        parseFloat(document.getElementById('cfg-needs').value)  || 50,
-      pctWants:        parseFloat(document.getElementById('cfg-wants').value)  || 10,
-      propCommission:  parseFloat(document.getElementById('cfg-commission').value) || 10,
-      primaryCurrency: document.getElementById('cfg-primary-currency').value || 'CLP'
+      salary:              parseFloat(document.getElementById('cfg-salary').value) || 0,
+      pctNeeds:            parseFloat(document.getElementById('cfg-needs').value)  || 50,
+      pctWants:            parseFloat(document.getElementById('cfg-wants').value)  || 10,
+      propCommission:      parseFloat(document.getElementById('cfg-commission').value) || 10,
+      primaryCurrency:     document.getElementById('cfg-primary-currency').value || 'CLP',
+      fundPricesTtlShort:  fp('cfg-fp-ttl-short', d.ttlShort),
+      fundPricesTtlLong:   fp('cfg-fp-ttl-long',  d.ttlLong),
+      fundPricesStagger:   fp('cfg-fp-stagger',   d.stagger),
+      fundPricesTimeout:   fp('cfg-fp-timeout',   d.timeout)
     });
     Debug.info('Settings saved');
     alert(I18n.t('settings.savedAlert'));

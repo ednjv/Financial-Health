@@ -9,6 +9,7 @@ var SK = {
   rents:       'sfv1:rents',
   m2:          'sfv1:m2',
   cMarket:     'sfv1:cache:market',
+  cFundPrices: 'sfv1:cache:fund-prices',
   budgetStats: 'sfv1:budgetStats',
   emergency:   'sfv1:emergency',
   pension:     'sfv1:pension'

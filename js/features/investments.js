@@ -306,6 +306,107 @@ var Investments = {
     this._save(d); this._renderFundList();
   },
 
+  // ── Live prices ────────────────────────────────────────────
+  _renderLivePrices: function() {
+    var el = document.getElementById('inv-live-prices'); if (!el) return;
+    var funds = this.getFunds().filter(function(f) {
+      return f.price_source && f.price_source !== 'none' && f.price_source !== 'manual';
+    });
+    if (!funds.length) { el.innerHTML = ''; return; }
+
+    var cache   = FundPrices.getCache();
+    var loading = el.getAttribute('data-loading') === 'true';
+    var t       = I18n.t.bind(I18n);
+
+    var srcLabel = {
+      cmf_chile: 'CMF', yahoo_finance: 'Yahoo',
+      alpha_vantage: 'Alpha V', morningstar: 'Morningstar'
+    };
+
+    var rows = funds.map(function(f) {
+      var entry = cache[f.id];
+
+      // ── identifier badge ──
+      var idBadge = '';
+      if (f.ticker)       idBadge = '<span class="badge bb" style="font-size:9px;margin-left:5px">' + f.ticker + '</span>';
+      else if (f.run_cmf) idBadge = '<span class="badge bb" style="font-size:9px;margin-left:5px">CMF:' + f.run_cmf + '</span>';
+      else if (f.isin)    idBadge = '<span class="badge bb" style="font-size:9px;margin-left:5px">' + f.isin + '</span>';
+
+      // ── price cell ──
+      var priceHtml;
+      if (entry && entry.price != null) {
+        priceHtml = Fmt.foreign(entry.price, entry.currency);
+      } else if (loading) {
+        priceHtml = '<span style="color:var(--muted)">…</span>';
+      } else {
+        priceHtml = '<span style="color:var(--muted)">—</span>';
+      }
+
+      // ── change badge ──
+      var changeBadge;
+      if (entry && entry.change1d_pct != null) {
+        var pct  = entry.change1d_pct;
+        var sign = pct >= 0 ? '+' : '';
+        var bg   = pct >= 0 ? 'rgba(16,185,129,.12)' : 'rgba(239,68,68,.12)';
+        var col  = pct >= 0 ? 'var(--green)' : 'var(--red)';
+        changeBadge = '<span class="badge" style="background:' + bg + ';color:' + col + ';font-family:var(--mono)">' +
+                      sign + pct.toFixed(2) + '%</span>';
+      } else if (loading) {
+        changeBadge = '<span style="color:var(--muted);font-size:11px">…</span>';
+      } else {
+        changeBadge = '<span class="badge" style="background:rgba(120,120,120,.1);color:var(--muted)">—</span>';
+      }
+
+      // ── updated timestamp + stale hint ──
+      var updatedHtml = '';
+      if (entry && entry.last_updated) {
+        var d    = new Date(entry.last_updated);
+        var time = d.toLocaleTimeString('es-CL', {hour:'2-digit', minute:'2-digit'});
+        var isStale = !FundPrices._isFresh(entry);
+        updatedHtml = '<div style="font-size:9px;color:var(--muted);margin-top:2px">' + time +
+                      (isStale ? ' · <span style="color:var(--amber)">' + t('investments.livePrices.stale') + '</span>' : '') +
+                      '</div>';
+      }
+
+      return '<tr>' +
+        '<td style="font-weight:700">' + f.name + idBadge + '</td>' +
+        '<td><span style="font-size:10px;color:var(--muted)">' + (srcLabel[f.price_source] || f.price_source) + '</span></td>' +
+        '<td style="font-family:var(--mono)">' + priceHtml + '</td>' +
+        '<td>' + changeBadge + updatedHtml + '</td>' +
+        '</tr>';
+    }).join('');
+
+    el.innerHTML =
+      '<div class="card" style="margin-bottom:16px">' +
+        '<div class="sh">' + t('investments.livePrices.title') + '</div>' +
+        '<table><thead><tr>' +
+          '<th>' + t('investments.livePrices.fund')   + '</th>' +
+          '<th>' + t('investments.livePrices.source') + '</th>' +
+          '<th>' + t('investments.livePrices.price')  + '</th>' +
+          '<th>' + t('investments.livePrices.change') + '</th>' +
+        '</tr></thead><tbody>' + rows + '</tbody></table>' +
+        (loading ? '<div style="font-size:11px;color:var(--muted);margin-top:10px;text-align:center">' + t('investments.livePrices.loading') + '</div>' : '') +
+      '</div>';
+  },
+
+  // Async: fetch all eligible funds then re-render.  Called by the ↻ button.
+  refreshLivePrices: async function() {
+    var btn = document.getElementById('inv-refresh-btn');
+    var el  = document.getElementById('inv-live-prices');
+    if (btn) { btn.disabled = true; btn.style.opacity = '.35'; }
+    if (el)  el.setAttribute('data-loading', 'true');
+    this._renderLivePrices();   // show loading state immediately
+
+    var self = this;
+    await FundPrices.fetchAll(this.getFunds(), function() {
+      self._renderLivePrices();  // progressive re-render as each resolves
+    });
+
+    if (el)  { el.setAttribute('data-loading', 'false'); }
+    if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+    this._renderLivePrices();   // final render with all results
+  },
+
   renderAll: function() {
     var m = document.getElementById('inv-month').value || new Date().toISOString().slice(0, 7);
     var el = document.getElementById('inv-month-label');
@@ -313,6 +414,7 @@ var Investments = {
     var parts = m.split('-'); var label = parts[1] ? months[parseInt(parts[1]) - 1] + ' ' + parts[0] : m;
     if (el) el.textContent = label;
     this._renderKPIs(m); this._renderSnapTable(m); this._renderCharts();
+    this._renderLivePrices();
   },
 
   _renderKPIs: function(month) {
